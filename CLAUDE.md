@@ -45,7 +45,9 @@ CRM / painel administrativo da marca de joias e semijoias **La Vie**, construíd
 - **Não** é fonte de verdade de produto/estoque — isso continua sendo a Nuvemshop.
 - Sincronizado **a partir dos pedidos** (pedido pago na Nuvemshop → CRM → gera/sincroniza no Bling).
 - Client tipado em `packages/bling/`, seguindo o mesmo padrão do `packages/nuvemshop/` (fila, retry, tipos).
-- Detalhar endpoints exatos da API do Bling (OAuth, emissão de NF-e, contas a receber) no início da implementação — ainda não levantados.
+- **Auth OAuth2** (Authorization Code) já implementada: `BlingService` (`apps/api/src/bling/bling.service.ts`) monta a URL de autorização, troca `code` por token em `GET /api/bling/callback` (`apps/api/src/bling/bling.controller.ts`) e persiste `access_token`/`refresh_token` na tabela `Setting` (chave `bling_oauth`), renovando sozinho quando perto de expirar. Botão "Conectar ao Bling" em `/configuracoes` só aparece quando `BLING_CLIENT_ID`/`BLING_CLIENT_SECRET` estão no `.env`. Redirect URI a cadastrar no app Bling: `${PUBLIC_URL}/api/bling/callback`.
+- Endpoints OAuth usados: `https://www.bling.com.br/Api/v3/oauth/authorize` e `.../oauth/token` — **não confirmados por doc oficial** (página é renderizada via JS, não deu pra raspar); testar de verdade assim que houver client_id/client_secret reais e corrigir se necessário.
+- Demais endpoints da API do Bling (emissão de NF-e, contas a receber) ainda não levantados — detalhar quando essa parte entrar em implementação.
 
 ### Evolution API (WhatsApp — fase 4)
 - Versão fixada: `evoapicloud/evolution-api:v2.3.7` (última estável antes da exigência de licença online da v2.4.0; já traz correções de QR Code). **Confirmado**: o repositório migrou de org (`atendai/` não tem mais tags 2.3.x no Docker Hub; a imagem atual vive em `evoapicloud/evolution-api`).

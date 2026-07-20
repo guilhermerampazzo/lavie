@@ -13,12 +13,17 @@ interface IntegrationStatus {
 
 interface IntegrationsResponse {
   nuvemshop: IntegrationStatus;
-  bling: IntegrationStatus;
+  bling: IntegrationStatus & { canConnect: boolean };
   evolution: IntegrationStatus;
 }
 
-export default async function ConfiguracoesPage() {
+export default async function ConfiguracoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bling?: string }>;
+}) {
   const session = await auth();
+  const { bling: blingFeedback } = await searchParams;
   const [integrations, syncJobs] = await Promise.all([
     apiServerFetch<IntegrationsResponse>("/settings/integrations").catch(() => null),
     apiServerFetch<SyncJobItem[]>("/settings/sync-jobs").catch(() => [] as SyncJobItem[]),
@@ -33,6 +38,17 @@ export default async function ConfiguracoesPage() {
             Integrações, templates e dados da marca
           </p>
         </div>
+
+        {blingFeedback === "conectado" && (
+          <div className="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-[12.5px] text-success">
+            Bling conectado com sucesso.
+          </div>
+        )}
+        {blingFeedback === "erro" && (
+          <div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-[12.5px] text-danger">
+            Não foi possível conectar ao Bling. Confira BLING_CLIENT_ID/BLING_CLIENT_SECRET no .env e tente novamente.
+          </div>
+        )}
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-line bg-surface p-5">
@@ -49,16 +65,26 @@ export default async function ConfiguracoesPage() {
                       className="flex items-center justify-between border-b border-line/60 py-2.5 text-[12.5px] last:border-0"
                     >
                       <span>{item.label}</span>
-                      <span
-                        className={
-                          item.configured
-                            ? "inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
-                            : "inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning"
-                        }
-                      >
-                        <span className="size-1.5 rounded-full bg-current" />
-                        {item.configured ? "Conectado" : "Não configurado"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {key === "bling" && !item.configured && integrations.bling.canConnect && (
+                          <a
+                            href="/api/bling/authorize"
+                            className="rounded-btn border border-brand px-2 py-1 text-[11px] font-medium text-brand-dark hover:bg-brand-soft/50"
+                          >
+                            Conectar ao Bling
+                          </a>
+                        )}
+                        <span
+                          className={
+                            item.configured
+                              ? "inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
+                              : "inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning"
+                          }
+                        >
+                          <span className="size-1.5 rounded-full bg-current" />
+                          {item.configured ? "Conectado" : "Não configurado"}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -67,7 +93,8 @@ export default async function ConfiguracoesPage() {
               <p className="text-[12.5px] text-muted-foreground">Não foi possível carregar as integrações.</p>
             )}
             <p className="mt-3 text-[11px] text-muted-foreground">
-              Credenciais são definidas por variáveis de ambiente (.env) — não editáveis por aqui por segurança.
+              Nuvemshop e Evolution são definidos por variáveis de ambiente (.env). O Bling usa OAuth — cadastre
+              BLING_CLIENT_ID/BLING_CLIENT_SECRET no .env e clique em &ldquo;Conectar ao Bling&rdquo; para autorizar.
             </p>
           </div>
 

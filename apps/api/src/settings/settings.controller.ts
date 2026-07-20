@@ -30,10 +30,14 @@ export class SettingsController {
   ) {}
 
   @Get('integrations')
-  integrations() {
+  async integrations() {
     return {
       nuvemshop: { configured: this.nuvemshop.configured, label: 'Nuvemshop' },
-      bling: { configured: this.bling.configured, label: 'Bling (fiscal/financeiro)' },
+      bling: {
+        configured: await this.bling.isConnected(),
+        canConnect: this.bling.hasClientCredentials(),
+        label: 'Bling (fiscal/financeiro)',
+      },
       evolution: { configured: this.evolution.configured, label: 'Evolution API (WhatsApp)' },
     };
   }

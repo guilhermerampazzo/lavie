@@ -136,14 +136,30 @@ export class ProductsService {
     }
 
     const product = await this.get(id);
+
+    // A Nuvemshop exige "attributes" (nomes das dimensoes de variacao, ex:
+    // Cor/Tamanho) + "values" por variante nessa mesma ordem — sem isso,
+    // duas variantes sao tratadas como identicas e a API rejeita com 422
+    // "Variant values should not be repeated" (confirmado contra a API real).
+    const attributeFields = (['cor', 'tamanho', 'banho'] as const).filter((field) =>
+      product.variants.some((v) => v[field]),
+    );
+    const attributeLabels: Record<(typeof attributeFields)[number], string> = {
+      cor: 'Cor',
+      tamanho: 'Tamanho',
+      banho: 'Banho',
+    };
+
     const payload = {
       name: { pt: product.nomeGerado },
       description: { pt: product.descricaoGerada },
+      attributes: attributeFields.map((field) => ({ pt: attributeLabels[field] })),
       variants: product.variants.map((v) => ({
         sku: v.sku,
         price: v.preco.toString(),
         stock_management: true,
         stock: v.estoque,
+        values: attributeFields.map((field) => ({ pt: v[field] || '-' })),
       })),
       categories: product.categoryId && product.category?.nuvemshopCategoryId
         ? [Number(product.category.nuvemshopCategoryId)]

@@ -7,6 +7,7 @@ import {
   Store,
   Ticket,
   BarChart3,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ export const PAINEL_NAV: NavItem[] = [
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Afiliadas", href: "/afiliadas", icon: Heart },
   { label: "Revendedoras", href: "/revendedoras", icon: Store },
+  { label: "Mapa", href: "/mapa", icon: MapPin },
   { label: "Cupons", href: "/cupons", icon: Ticket },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
 ];

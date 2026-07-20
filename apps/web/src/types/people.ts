@@ -78,5 +78,7 @@ export interface Reseller {
   state?: string | null;
   status: "pendente" | "aprovada" | "bloqueada";
   balance: string;
+  lat?: number | null;
+  lng?: number | null;
   createdAt: string;
 }

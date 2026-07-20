@@ -14,5 +14,10 @@ export const updateResellerSchema = createResellerSchema.partial().extend({
   status: z.enum(['pendente', 'aprovada', 'bloqueada']).optional(),
 });
 
+export const inviteResellerSchema = z.object({
+  email: z.string().email(),
+});
+
 export type CreateResellerDto = z.infer<typeof createResellerSchema>;
 export type UpdateResellerDto = z.infer<typeof updateResellerSchema>;
+export type InviteResellerDto = z.infer<typeof inviteResellerSchema>;

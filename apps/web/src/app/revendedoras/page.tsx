@@ -4,6 +4,8 @@ import { apiServerFetch } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ApproveActions } from "@/components/revendedoras/approve-actions";
+import { NewResellerSheet } from "@/components/revendedoras/new-reseller-sheet";
+import { InviteActions } from "@/components/revendedoras/invite-actions";
 import type { Reseller } from "@/types/people";
 
 function formatBRL(value: string | number) {
@@ -19,11 +21,14 @@ export default async function RevendedorasPage() {
   return (
     <AppShell userName={session?.user?.name ?? ""}>
       <div className="px-5 py-6 lg:px-6">
-        <div className="mb-5">
-          <h1 className="mb-1 font-serif text-[22px] font-medium text-ink">Revendedoras e lojas parceiras</h1>
-          <p className="text-[12.5px] text-muted-foreground">
-            {active.length} ativas · {pending.length} aguardando aprovação
-          </p>
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="mb-1 font-serif text-[22px] font-medium text-ink">Revendedoras e lojas parceiras</h1>
+            <p className="text-[12.5px] text-muted-foreground">
+              {active.length} ativas · {pending.length} aguardando aprovação
+            </p>
+          </div>
+          <NewResellerSheet />
         </div>
 
         {resellers.length === 0 ? (
@@ -72,6 +77,7 @@ export default async function RevendedorasPage() {
                       <th className="px-3 py-2 font-medium">Cidade</th>
                       <th className="px-3 py-2 text-right font-medium">Saldo</th>
                       <th className="px-3 py-2 font-medium">Status</th>
+                      <th className="px-3 py-2 font-medium"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -100,6 +106,9 @@ export default async function RevendedorasPage() {
                             <span className="size-1.5 rounded-full bg-current" />
                             {r.status === "aprovada" ? "Ativa" : "Bloqueada"}
                           </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          {r.status === "aprovada" && <InviteActions resellerId={r.id} resellerName={r.name} />}
                         </td>
                       </tr>
                     ))}

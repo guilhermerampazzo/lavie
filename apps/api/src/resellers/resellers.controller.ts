@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ResellersService } from './resellers.service';
-import { createResellerSchema, updateResellerSchema } from './dto/reseller.dto';
+import { createResellerSchema, updateResellerSchema, inviteResellerSchema } from './dto/reseller.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'equipe')
@@ -39,5 +39,11 @@ export class ResellersController {
   @Post(':id/block')
   block(@Param('id') id: string) {
     return this.service.block(id);
+  }
+
+  @Post(':id/invite')
+  invite(@Param('id') id: string, @Body() body: unknown) {
+    const { email } = inviteResellerSchema.parse(body);
+    return this.service.invite(id, email);
   }
 }

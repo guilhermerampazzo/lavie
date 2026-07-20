@@ -4,6 +4,7 @@ import { apiServerFetch } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { Affiliate } from "@/types/people";
+import { NewAffiliateSheet } from "@/components/afiliadas/new-affiliate-sheet";
 
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -17,11 +18,14 @@ export default async function AfiliadasPage() {
   return (
     <AppShell userName={session?.user?.name ?? ""}>
       <div className="px-5 py-6 lg:px-6">
-        <div className="mb-5">
-          <h1 className="mb-1 font-serif text-[22px] font-medium text-ink">Afiliadas e influenciadoras</h1>
-          <p className="text-[12.5px] text-muted-foreground">
-            {affiliates.length} cadastradas · {formatBRL(commissionPending)} em comissões pendentes
-          </p>
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="mb-1 font-serif text-[22px] font-medium text-ink">Afiliadas e influenciadoras</h1>
+            <p className="text-[12.5px] text-muted-foreground">
+              {affiliates.length} cadastradas · {formatBRL(commissionPending)} em comissões pendentes
+            </p>
+          </div>
+          <NewAffiliateSheet />
         </div>
 
         {affiliates.length === 0 ? (

@@ -1,0 +1,19 @@
+{
+  "name": "lavie-crm",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @lavie/web dev",
+    "dev:api": "pnpm --filter @lavie/api start:dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "build:packages": "pnpm --filter \"./packages/*\" build",
+    "db:generate": "pnpm --filter @lavie/db generate",
+    "db:migrate": "pnpm --filter @lavie/db migrate"
+  }
+}

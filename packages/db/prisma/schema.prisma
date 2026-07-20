@@ -1,0 +1,469 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth / RBAC
+// ---------------------------------------------------------------------------
+
+enum Role {
+  admin
+  equipe
+  revendedora
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(equipe)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  reseller      Reseller? @relation(fields: [resellerId], references: [id])
+  resellerId    String?
+
+  @@index([role])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Produtos (Nuvemshop = fonte de verdade de produto/estoque/categoria)
+// ---------------------------------------------------------------------------
+
+model ProductTemplate {
+  id                String   @id @default(cuid())
+  name              String   // ex.: "Pulseira", "Anel", "Colar"
+  openingParagraph  String   @db.Text // slots {{nomePeca}} {{banhoMaterial}} etc.
+  careBlock         String   @db.Text // bloco fixo "CUIDE DA SUA La Vie"
+  manufacturingBlock String  @db.Text // bloco fixo "processo de fabricação"
+  isDefault         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  products Product[]
+}
+
+model Category {
+  id                 String     @id @default(cuid())
+  name               String
+  nuvemshopCategoryId String?   @unique
+  parentId           String?
+  parent             Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children           Category[] @relation("CategoryToCategory")
+  products           Product[]
+}
+
+enum ProductStatus {
+  draft
+  active
+  inactive
+}
+
+model Product {
+  id                  String        @id @default(cuid())
+  nuvemshopProductId  String?       @unique
+
+  // Campos variaveis do template (escopo.md 8.3)
+  nomePeca            String
+  banhoMaterial       String
+  cor                 String
+  tamanho             String?
+  fecho                String?
+  hipoalergenico      Boolean       @default(true)
+
+  // Gerados a partir do template
+  nomeGerado          String
+  descricaoGerada     String        @db.Text
+
+  templateId          String
+  template            ProductTemplate @relation(fields: [templateId], references: [id])
+
+  categoryId          String?
+  category            Category?     @relation(fields: [categoryId], references: [id])
+
+  status              ProductStatus @default(draft)
+  precoBase           Decimal       @db.Decimal(10, 2)
+  precoRevendedora     Decimal?     @db.Decimal(10, 2)
+  precoPromocional     Decimal?     @db.Decimal(10, 2)
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  variants            Variant[]
+  images              ProductImage[]
+  orderItems          OrderItem[]
+
+  @@index([status])
+}
+
+model Variant {
+  id                  String   @id @default(cuid())
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku                 String   @unique
+  nuvemshopVariantId  String?  @unique
+  cor                 String?
+  tamanho              String?
+  banho                String?
+  preco                Decimal  @db.Decimal(10, 2)
+  estoque              Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model ProductImage {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url        String   // objeto no MinIO
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Cupons
+// ---------------------------------------------------------------------------
+
+enum CouponType {
+  fixed
+  percentage
+  free_shipping
+}
+
+model Coupon {
+  id                String     @id @default(cuid())
+  nuvemshopCouponId String?    @unique
+  code              String     @unique
+  type              CouponType
+  value             Decimal?   @db.Decimal(10, 2)
+  usageLimit        Int?
+  usageCount        Int        @default(0)
+  validFrom         DateTime?
+  validUntil        DateTime?
+  active            Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Clientes
+// ---------------------------------------------------------------------------
+
+enum CustomerSegment {
+  vip
+  fiel
+  novo
+  a_reativar
+  aniversariante
+  carrinho_abandonado
+}
+
+model Customer {
+  id                  String            @id @default(cuid())
+  nuvemshopCustomerId String?           @unique
+  name                String
+  email               String?
+  phone               String?
+  document            String?
+  city                String?
+  state                String?
+  segments             CustomerSegment[]
+  loyaltyPoints         LoyaltyPoints?
+  orders                Order[]
+  notes                 String?          @db.Text
+  createdAt              DateTime         @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  @@index([segments])
+}
+
+model LoyaltyPoints {
+  id          String   @id @default(cuid())
+  customerId  String   @unique
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  points      Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Afiliadas / Influenciadoras
+// ---------------------------------------------------------------------------
+
+enum CommissionStatus {
+  pendente
+  aprovado
+  pago
+}
+
+model Affiliate {
+  id            String   @id @default(cuid())
+  name          String
+  handle        String?  // @usuario
+  channel       String?  // instagram, tiktok, etc.
+  followers     Int?
+  email         String?
+  phone         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  trackingLinks TrackingLink[]
+  commissions   Commission[]
+  campaigns     Campaign[]
+}
+
+model TrackingLink {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  couponCode  String?
+  utmSource   String?
+  utmCampaign String?
+  clicks      Int       @default(0)
+  conversions Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+model Commission {
+  id          String            @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate         @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?            @relation(fields: [orderId], references: [id])
+  amount      Decimal           @db.Decimal(10, 2)
+  status      CommissionStatus  @default(pendente)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model Campaign {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  name        String
+  startsAt    DateTime?
+  endsAt      DateTime?
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Revendedoras / Lojas Parceiras
+// ---------------------------------------------------------------------------
+
+enum ResellerStatus {
+  pendente
+  aprovada
+  bloqueada
+}
+
+model Reseller {
+  id            String         @id @default(cuid())
+  name          String
+  document      String?        // CNPJ/CPF
+  partnerType   String?        // ex.: "loja fisica", "revendedora individual"
+  city          String?
+  state         String?
+  status        ResellerStatus @default(pendente)
+  balance       Decimal        @default(0) @db.Decimal(10, 2)
+  lat           Float?
+  lng           Float?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  users         User[]
+  priceTable    ResellerPriceTable[]
+  consignments  Consignment[]
+  orders        ResellerOrder[]
+  documents     ResellerDocument[]
+}
+
+model ResellerPriceTable {
+  id         String   @id @default(cuid())
+  resellerId String
+  reseller   Reseller @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  productId  String
+  price      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+
+  @@unique([resellerId, productId])
+}
+
+enum ConsignmentStatus {
+  em_posse
+  vendido
+  devolvido
+}
+
+model Consignment {
+  id         String            @id @default(cuid())
+  resellerId String
+  reseller   Reseller          @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  variantId  String
+  quantity   Int
+  status     ConsignmentStatus @default(em_posse)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+model ResellerOrder {
+  id         String   @id @default(cuid())
+  resellerId String
+  reseller   Reseller @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  orderId    String?  @unique
+  order      Order?   @relation(fields: [orderId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model ResellerDocument {
+  id         String   @id @default(cuid())
+  resellerId String
+  reseller   Reseller @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  url        String   // objeto no MinIO
+  label      String
+  createdAt  DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Pedidos (Nuvemshop origina; CRM le e enriquece; Bling = fiscal/financeiro)
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  novo
+  pago
+  em_separacao
+  embalado
+  enviado
+  entregue
+  cancelado
+}
+
+enum SalesChannel {
+  site
+  revendedora
+  marketplace
+  fisico
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  nuvemshopOrderId  String?       @unique
+  blingInvoiceId    String?       @unique // NF-e emitida no Bling
+  customerId        String?
+  customer          Customer?     @relation(fields: [customerId], references: [id])
+  channel           SalesChannel  @default(site)
+  status            OrderStatus   @default(novo)
+  total             Decimal       @db.Decimal(10, 2)
+  trackingCode      String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  items             OrderItem[]
+  commissions       Commission[]
+  resellerOrder     ResellerOrder?
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id])
+  sku        String
+  name       String
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+}
+
+// ---------------------------------------------------------------------------
+// Automacao / Atendimento (fase 4 — Evolution API)
+// ---------------------------------------------------------------------------
+
+enum ConversationStatus {
+  aberta
+  em_atendimento
+  resolvida
+}
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  trigger   String   // boas-vindas, pos-compra, reativacao, aniversario, carrinho_abandonado...
+  content   String   @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id         String              @id @default(cuid())
+  channel    String              // whatsapp, instagram, tiktok
+  contact    String              // telefone/handle
+  status     ConversationStatus  @default(aberta)
+  assignedTo String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  messages   Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      String       // inbound | outbound
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Integracoes / Auditoria / Configuracao
+// ---------------------------------------------------------------------------
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  source      String   // nuvemshop | bling | evolution
+  eventType   String
+  payload     Json
+  processed   Boolean  @default(false)
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+}
+
+enum SyncJobStatus {
+  pending
+  running
+  success
+  failed
+}
+
+model SyncJob {
+  id         String        @id @default(cuid())
+  type       String        // ex.: "nuvemshop:reconcile-stock", "bling:emit-invoice"
+  status     SyncJobStatus @default(pending)
+  error      String?       @db.Text
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime      @default(now())
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

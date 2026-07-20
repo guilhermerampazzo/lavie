@@ -1,0 +1,33 @@
+node_modules/
+.pnpm-store/
+dist/
+build/
+.next/
+out/
+coverage/
+
+.env
+.env.local
+.env.*.local
+
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+.DS_Store
+Thumbs.db
+
+# Prisma
+packages/db/generated/
+
+# Docker volumes are managed by Docker, nothing local to ignore here
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

@@ -1,0 +1,22 @@
+{
+	admin off
+}
+
+:80 {
+	@painel host painel.usejoiaslavie.com.br localhost painel.localhost
+	handle @painel {
+		handle /api/* {
+			reverse_proxy api:4000
+		}
+		reverse_proxy web:3000
+	}
+
+	@evo host evo.usejoiaslavie.com.br evo.localhost
+	handle @evo {
+		reverse_proxy evolution:8080
+	}
+
+	handle {
+		respond "La Vie CRM — host desconhecido" 404
+	}
+}

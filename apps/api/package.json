@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@lavie/db": "workspace:*",
+    "@lavie/evolution": "workspace:*",
     "@lavie/nuvemshop": "workspace:*",
     "@lavie/product-template": "workspace:*",
     "@nestjs/bullmq": "^11.0.4",

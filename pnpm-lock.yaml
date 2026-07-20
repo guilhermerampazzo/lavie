@@ -13,6 +13,9 @@ importers:
       '@lavie/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@lavie/evolution':
+        specifier: workspace:*
+        version: link:../../packages/evolution
       '@lavie/nuvemshop':
         specifier: workspace:*
         version: link:../../packages/nuvemshop

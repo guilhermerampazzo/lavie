@@ -47,11 +47,11 @@ CRM / painel administrativo da marca de joias e semijoias **La Vie**, construíd
 - Client tipado em `packages/bling/`, seguindo o mesmo padrão do `packages/nuvemshop/` (fila, retry, tipos).
 - Detalhar endpoints exatos da API do Bling (OAuth, emissão de NF-e, contas a receber) no início da implementação — ainda não levantados.
 
-### Evolution API (WhatsApp — fase 2)
-- Versão fixada: `atendai/evolution-api:v2.3.7` (última estável antes da exigência de licença online da v2.4.0; já traz correções de QR Code).
+### Evolution API (WhatsApp — fase 4)
+- Versão fixada: `evoapicloud/evolution-api:v2.3.7` (última estável antes da exigência de licença online da v2.4.0; já traz correções de QR Code). **Confirmado**: o repositório migrou de org (`atendai/` não tem mais tags 2.3.x no Docker Hub; a imagem atual vive em `evoapicloud/evolution-api`).
 - Roda em `evolution:8080` (porta padrão, interna, nunca remapeada) com **Postgres e Redis próprios** (não compartilhar com o CRM).
-- `packages/evolution/` nasce já na Fase 0/1 com client tipado e envs, mesmo que os fluxos só entrem na Fase 4.
-- Confirmar imagem/tag exata no compose oficial do repo `evolution-foundation/evolution-api` antes de subir (projeto mudou de org em 2026).
+- `packages/evolution/` + `EvolutionService` (apps/api) já existem desde a Fase 4, com client tipado e envs. Serviço fica atrás do profile Docker `evolution` (desligado por padrão — subir com `docker compose --profile evolution up -d`).
+- Conexão real (leitura do QR Code, pareamento do WhatsApp) depende de acesso físico a um celular — não pode ser testada de forma autônoma; o modelo de dados (Conversation/Message), a tela de Atendimento e o recebimento de webhooks já estão prontos e testados com dados simulados.
 
 ---
 

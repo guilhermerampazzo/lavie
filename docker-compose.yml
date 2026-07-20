@@ -102,8 +102,10 @@ services:
 
   # --- Evolution API (WhatsApp, Fase 4) ---
   # Desligado por padrao. Subir com: docker compose --profile evolution up -d
+  # Imagem confirmada em evoapicloud/evolution-api (o repo migrou de org de
+  # atendai/ para evoapicloud/ — atendai/evolution-api nao tem mais tags 2.3.x).
   evolution:
-    image: atendai/evolution-api:v2.3.7
+    image: evoapicloud/evolution-api:v2.3.7
     restart: unless-stopped
     profiles: ["evolution"]
     expose:

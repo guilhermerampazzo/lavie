@@ -19,6 +19,9 @@ import { OrdersModule } from './orders/orders.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PortalModule } from './portal/portal.module';
 import { ReportsModule } from './reports/reports.module';
+import { EvolutionModule } from './evolution/evolution.module';
+import { ConversationsModule } from './conversations/conversations.module';
+import { MessageTemplatesModule } from './message-templates/message-templates.module';
 
 @Module({
   imports: [
@@ -48,6 +51,9 @@ import { ReportsModule } from './reports/reports.module';
     DashboardModule,
     PortalModule,
     ReportsModule,
+    EvolutionModule,
+    ConversationsModule,
+    MessageTemplatesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -8,6 +8,8 @@ import {
   Ticket,
   BarChart3,
   MapPin,
+  MessageCircle,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,6 +29,8 @@ export const PAINEL_NAV: NavItem[] = [
   { label: "Mapa", href: "/mapa", icon: MapPin },
   { label: "Cupons", href: "/cupons", icon: Ticket },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
+  { label: "Atendimento", href: "/atendimento", icon: MessageCircle },
+  { label: "Fluxos", href: "/fluxos", icon: Zap },
 ];
 
 export const BOTTOM_NAV: NavItem[] = [

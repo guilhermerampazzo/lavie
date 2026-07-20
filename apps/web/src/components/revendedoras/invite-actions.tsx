@@ -43,7 +43,7 @@ export function InviteActions({ resellerId, resellerName }: { resellerId: string
   return (
     <Sheet
       open={open}
-      onOpenChange={(v) => {
+      onOpenChange={(v: boolean) => {
         setOpen(v);
         if (!v) {
           setResult(null);

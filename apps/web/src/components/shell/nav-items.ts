@@ -10,6 +10,7 @@ import {
   MapPin,
   MessageCircle,
   Zap,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ export const PAINEL_NAV: NavItem[] = [
   { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
   { label: "Atendimento", href: "/atendimento", icon: MessageCircle },
   { label: "Fluxos", href: "/fluxos", icon: Zap },
+  { label: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
 export const BOTTOM_NAV: NavItem[] = [

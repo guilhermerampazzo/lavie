@@ -5,6 +5,7 @@ import { apiServerFetch } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OrderStatusBadge } from "@/components/pedidos/order-status-badge";
+import { cn } from "@/lib/utils";
 import type { OrderListItem } from "@/types/dashboard";
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -14,24 +15,67 @@ const CHANNEL_LABEL: Record<string, string> = {
   fisico: "Físico",
 };
 
+const STATUS_FILTERS = [
+  { value: "", label: "Todos" },
+  { value: "novo", label: "Novo" },
+  { value: "pago", label: "Pago" },
+  { value: "em_separacao", label: "Em separação" },
+  { value: "embalado", label: "Embalado" },
+  { value: "enviado", label: "Enviado" },
+  { value: "entregue", label: "Entregue" },
+  { value: "cancelado", label: "Cancelado" },
+] as const;
+
 function formatBRL(value: string | number) {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export default async function PedidosPage() {
+export default async function PedidosPage({
+  searchParams,
+}: {
+  searchParams: { status?: string; canal?: string };
+}) {
   const session = await auth();
-  const orders = await apiServerFetch<OrderListItem[]>("/orders").catch(() => [] as OrderListItem[]);
+  const status = searchParams.status ?? "";
+  const canal = searchParams.canal ?? "";
+  const query = new URLSearchParams();
+  if (status) query.set("status", status);
+  if (canal) query.set("channel", canal);
+  const qs = query.toString();
+
+  const orders = await apiServerFetch<OrderListItem[]>(`/orders${qs ? `?${qs}` : ""}`).catch(
+    () => [] as OrderListItem[],
+  );
 
   return (
     <AppShell userName={session?.user?.name ?? ""}>
       <div className="px-5 py-6 lg:px-6">
-        <div className="mb-5">
+        <div className="mb-4">
           <h1 className="mb-1 font-serif text-[22px] font-medium text-ink">Pedidos</h1>
           <p className="text-[12.5px] text-muted-foreground">{orders.length} pedidos</p>
         </div>
 
+        <div className="mb-5 flex flex-wrap gap-1.5">
+          {STATUS_FILTERS.map((f) => (
+            <Link
+              key={f.value}
+              href={`/pedidos${f.value ? `?status=${f.value}` : ""}`}
+              className={cn(
+                "flex h-[27px] items-center rounded-full border border-line px-2.5 text-[11.5px] text-muted-foreground",
+                status === f.value && "border-transparent bg-brand-soft font-medium text-brand-dark",
+              )}
+            >
+              {f.label}
+            </Link>
+          ))}
+        </div>
+
         {orders.length === 0 ? (
-          <EmptyState icon={ShoppingBag} title="Nenhum pedido ainda" description="Pedidos de todos os canais aparecem aqui." />
+          <EmptyState
+            icon={ShoppingBag}
+            title="Nenhum pedido encontrado"
+            description="Ajuste os filtros ou aguarde novos pedidos chegarem."
+          />
         ) : (
           <>
             <div className="hidden overflow-hidden rounded-xl border border-line lg:block">

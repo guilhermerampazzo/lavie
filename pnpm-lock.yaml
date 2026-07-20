@@ -10,6 +10,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@lavie/bling':
+        specifier: workspace:*
+        version: link:../../packages/bling
       '@lavie/db':
         specifier: workspace:*
         version: link:../../packages/db

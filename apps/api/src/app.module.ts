@@ -22,6 +22,8 @@ import { ReportsModule } from './reports/reports.module';
 import { EvolutionModule } from './evolution/evolution.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { MessageTemplatesModule } from './message-templates/message-templates.module';
+import { BlingModule } from './bling/bling.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -54,6 +56,8 @@ import { MessageTemplatesModule } from './message-templates/message-templates.mo
     EvolutionModule,
     ConversationsModule,
     MessageTemplatesModule,
+    BlingModule,
+    SettingsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

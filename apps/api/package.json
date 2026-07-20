@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@lavie/bling": "workspace:*",
     "@lavie/db": "workspace:*",
     "@lavie/evolution": "workspace:*",
     "@lavie/nuvemshop": "workspace:*",

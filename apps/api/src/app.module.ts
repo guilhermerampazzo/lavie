@@ -12,6 +12,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { CustomersModule } from './customers/customers.module';
+import { AffiliatesModule } from './affiliates/affiliates.module';
+import { ResellersModule } from './resellers/resellers.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ProductsModule,
     CouponsModule,
     WebhooksModule,
+    CustomersModule,
+    AffiliatesModule,
+    ResellersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

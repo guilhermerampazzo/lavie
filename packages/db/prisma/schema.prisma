@@ -184,6 +184,7 @@ model Customer {
   document            String?
   city                String?
   state                String?
+  birthDate           DateTime?
   segments             CustomerSegment[]
   loyaltyPoints         LoyaltyPoints?
   orders                Order[]

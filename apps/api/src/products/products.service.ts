@@ -86,10 +86,15 @@ export class ProductsService {
     let nomeGerado = existing.nomeGerado;
     let descricaoGerada = existing.descricaoGerada;
     if (dto.nomePeca || dto.banhoMaterial || dto.cor || dto.tamanho || dto.fecho || dto.templateId) {
+      if (!templateId) {
+        throw new BadRequestException(
+          'Este produto não usa um template do CRM (foi importado da Nuvemshop) — edite nome/descrição diretamente ou selecione um template.',
+        );
+      }
       const rendered = await this.renderFromTemplate(templateId, {
-        nomePeca: dto.nomePeca ?? existing.nomePeca,
-        banhoMaterial: dto.banhoMaterial ?? existing.banhoMaterial,
-        cor: dto.cor ?? existing.cor,
+        nomePeca: dto.nomePeca ?? existing.nomePeca ?? '',
+        banhoMaterial: dto.banhoMaterial ?? existing.banhoMaterial ?? '',
+        cor: dto.cor ?? existing.cor ?? '',
         tamanho: dto.tamanho ?? existing.tamanho ?? undefined,
         fecho: dto.fecho ?? existing.fecho ?? undefined,
         hipoalergenico: dto.hipoalergenico ?? existing.hipoalergenico,

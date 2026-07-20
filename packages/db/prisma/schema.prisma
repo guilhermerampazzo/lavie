@@ -80,20 +80,21 @@ model Product {
   id                  String        @id @default(cuid())
   nuvemshopProductId  String?       @unique
 
-  // Campos variaveis do template (escopo.md 8.3)
-  nomePeca            String
-  banhoMaterial       String
-  cor                 String
+  // Campos variaveis do template (escopo.md 8.3) — nulos quando o produto
+  // veio de import da Nuvemshop em vez do fluxo de template do CRM.
+  nomePeca            String?
+  banhoMaterial       String?
+  cor                 String?
   tamanho             String?
   fecho                String?
   hipoalergenico      Boolean       @default(true)
 
-  // Gerados a partir do template
+  // Gerados a partir do template (ou copiados direto da Nuvemshop na importacao)
   nomeGerado          String
   descricaoGerada     String        @db.Text
 
-  templateId          String
-  template            ProductTemplate @relation(fields: [templateId], references: [id])
+  templateId          String?
+  template            ProductTemplate? @relation(fields: [templateId], references: [id])
 
   categoryId          String?
   category            Category?     @relation(fields: [categoryId], references: [id])

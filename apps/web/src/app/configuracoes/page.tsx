@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { apiServerFetch } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { FileText, Zap } from "lucide-react";
+import { SyncPanel, type SyncJobItem } from "@/components/configuracoes/sync-panel";
 
 interface IntegrationStatus {
   configured: boolean;
@@ -18,9 +19,10 @@ interface IntegrationsResponse {
 
 export default async function ConfiguracoesPage() {
   const session = await auth();
-  const integrations = await apiServerFetch<IntegrationsResponse>("/settings/integrations").catch(
-    () => null,
-  );
+  const [integrations, syncJobs] = await Promise.all([
+    apiServerFetch<IntegrationsResponse>("/settings/integrations").catch(() => null),
+    apiServerFetch<SyncJobItem[]>("/settings/sync-jobs").catch(() => [] as SyncJobItem[]),
+  ]);
 
   return (
     <AppShell userName={session?.user?.name ?? ""}>
@@ -89,6 +91,10 @@ export default async function ConfiguracoesPage() {
                 Fluxos automáticos (WhatsApp)
               </Link>
             </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <SyncPanel jobs={syncJobs} disabled={!integrations?.nuvemshop.configured} />
           </div>
 
           <div className="rounded-xl border border-line bg-surface p-5 lg:col-span-2">

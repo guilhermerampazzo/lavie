@@ -72,6 +72,12 @@ export class NuvemshopClient {
       this.request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
   };
 
+  // --- Clientes ---
+  customers = {
+    list: (query = '') => this.request(`/customers${query}`),
+    get: (id: string) => this.request(`/customers/${id}`),
+  };
+
   // --- Webhooks ---
   webhooks = {
     list: () => this.request('/webhooks'),

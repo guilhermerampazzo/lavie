@@ -15,6 +15,10 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { CustomersModule } from './customers/customers.module';
 import { AffiliatesModule } from './affiliates/affiliates.module';
 import { ResellersModule } from './resellers/resellers.module';
+import { OrdersModule } from './orders/orders.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { PortalModule } from './portal/portal.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -40,6 +44,10 @@ import { ResellersModule } from './resellers/resellers.module';
     CustomersModule,
     AffiliatesModule,
     ResellersModule,
+    OrdersModule,
+    DashboardModule,
+    PortalModule,
+    ReportsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

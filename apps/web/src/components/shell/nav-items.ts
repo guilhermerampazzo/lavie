@@ -6,6 +6,7 @@ import {
   Heart,
   Store,
   Ticket,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ export const PAINEL_NAV: NavItem[] = [
   { label: "Afiliadas", href: "/afiliadas", icon: Heart },
   { label: "Revendedoras", href: "/revendedoras", icon: Store },
   { label: "Cupons", href: "/cupons", icon: Ticket },
+  { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
 ];
 
 export const BOTTOM_NAV: NavItem[] = [

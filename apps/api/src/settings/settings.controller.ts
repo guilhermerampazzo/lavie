@@ -50,6 +50,11 @@ export class SettingsController {
     });
   }
 
+  @Post('webhooks/register')
+  async registerWebhooks() {
+    return this.nuvemshop.registerWebhooks();
+  }
+
   @Post('sync')
   async triggerSync(@Body() body: unknown) {
     const { entity } = syncEntitySchema.parse(body);

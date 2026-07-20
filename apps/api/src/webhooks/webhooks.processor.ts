@@ -2,6 +2,19 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { SyncService } from '../sync/sync.service';
+
+const NUVEMSHOP_EVENT_ENTITY: Record<string, 'products' | 'customers' | 'orders'> = {
+  'order/created': 'orders',
+  'order/paid': 'orders',
+  'order/updated': 'orders',
+  'order/cancelled': 'orders',
+  'order/fulfilled': 'orders',
+  'product/created': 'products',
+  'product/updated': 'products',
+  'customer/created': 'customers',
+  'customer/updated': 'customers',
+};
 
 interface EvolutionMessagePayload {
   event?: string;
@@ -16,7 +29,10 @@ interface EvolutionMessagePayload {
 export class WebhooksProcessor extends WorkerHost {
   private readonly logger = new Logger(WebhooksProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sync: SyncService,
+  ) {
     super();
   }
 
@@ -30,9 +46,14 @@ export class WebhooksProcessor extends WorkerHost {
       await this.handleEvolutionEvent(event.payload as EvolutionMessagePayload);
     }
 
-    // TODO: despachar eventos da Nuvemshop (pedido criado/pago, produto
-    // atualizado, cliente criado) conforme os fluxos forem implementados —
-    // escopo.md 8.4.
+    if (event.source === 'nuvemshop') {
+      const entity = NUVEMSHOP_EVENT_ENTITY[event.eventType];
+      if (entity) {
+        await this.sync.runEntity(entity);
+      } else {
+        this.logger.warn(`Evento Nuvemshop sem mapeamento: ${event.eventType}`);
+      }
+    }
 
     await this.prisma.client.webhookEvent.update({
       where: { id: event.id },

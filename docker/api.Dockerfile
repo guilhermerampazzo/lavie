@@ -11,6 +11,7 @@ COPY packages/nuvemshop/package.json packages/nuvemshop/package.json
 COPY packages/bling/package.json packages/bling/package.json
 COPY packages/evolution/package.json packages/evolution/package.json
 COPY packages/ui/package.json packages/ui/package.json
+COPY packages/product-template/package.json packages/product-template/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM base AS build

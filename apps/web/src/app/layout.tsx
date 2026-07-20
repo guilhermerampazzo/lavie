@@ -3,7 +3,9 @@ import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,7 +33,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={cn(inter.variable, fraunces.variable)}>
       <body className="font-sans antialiased">
-        <AuthSessionProvider>{children}</AuthSessionProvider>
+        <AuthSessionProvider>
+          <QueryProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </QueryProvider>
+        </AuthSessionProvider>
         <Toaster position="top-center" />
       </body>
     </html>

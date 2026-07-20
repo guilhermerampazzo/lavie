@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -24,8 +25,7 @@ export default async function LoginPage() {
       {/* Mobile: logo no topo, card de formulario abaixo */}
       <div className="flex min-h-screen flex-col px-5 py-8 lg:hidden">
         <div className="mb-8 mt-4 flex flex-col items-center gap-3">
-          <span className="h-2.5 w-2.5 rounded-full bg-brand" aria-hidden="true" />
-          <span className="font-serif text-[19px] font-semibold text-ink">La Vie</span>
+          <BrandLogo height={26} />
           <span className="text-xs text-muted-foreground">Painel administrativo</span>
         </div>
 
@@ -52,9 +52,8 @@ export default async function LoginPage() {
 function BrandPanel() {
   return (
     <div className="relative flex flex-col justify-between overflow-hidden border-r border-line bg-canvas px-12 py-12">
-      <div className="flex items-center gap-2.5">
-        <span className="h-[9px] w-[9px] rounded-full bg-brand" aria-hidden="true" />
-        <span className="font-serif text-[17px] font-semibold text-ink">La Vie</span>
+      <div className="flex items-center">
+        <BrandLogo height={24} />
       </div>
 
       <div className="max-w-[360px]">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand-logo";
 import { PAINEL_NAV } from "./nav-items";
 
 export function Sidebar({ userName }: { userName: string }) {
@@ -16,9 +17,8 @@ export function Sidebar({ userName }: { userName: string }) {
 
   return (
     <aside className="hidden w-[220px] flex-col border-r border-line bg-canvas px-3.5 py-5 lg:flex">
-      <Link href="/" className="mb-5 flex items-center gap-2.5 px-2 py-1">
-        <span className="h-2 w-2 rounded-full bg-brand" aria-hidden="true" />
-        <span className="font-serif text-[15px] font-semibold text-ink">La Vie</span>
+      <Link href="/" className="mb-5 flex items-center px-2 py-1">
+        <BrandLogo height={18} />
       </Link>
 
       <nav className="flex flex-col gap-0.5">

@@ -123,7 +123,25 @@ Ao final de cada fase entregável (e obrigatoriamente ao final do projeto): varr
 
 ---
 
-## 11. Decisões já fechadas (não reabrir sem o usuário)
+## 11. Módulo 2 — Cadastro Inteligente de Produtos (implementado)
+
+Cobre o `escopofinal.md` seção 3 (ficha unificada, 3 formas de entrada, fluxo até etiqueta/publicação).
+
+- **`packages/ai`** — client de IA com dois estilos de API:
+  - `anthropic` (POST `/v1/messages`, Claude nativo) — auto-detectado quando `AI_BASE_URL` contém "anthropic".
+  - `openai` (POST `/chat/completions`, gateway OpenAI-compatible — padrão OpenCode Go `https://opencode.ai/zen/go/v1`, mesmo usado pelo Hermes).
+  - Envs: `AI_BASE_URL`, `AI_API_KEY` (aceita `OPENCODE_GO_API_KEY`), `AI_API_STYLE`, `AI_MODEL` (padrão `claude-sonnet-4-5`), `AI_FALLBACK_MODEL` (padrão `deepseek-v4-flash`), `AI_VISION_MODEL` (padrão `mimo-v2.5` — **necessário**: modelos de texto puro como deepseek-v4-flash rejeitam imagem), `AI_TIMEOUT_MS`.
+  - Funções: `analyzeProductImage` (foto → ficha) e `extractInvoice` (NF → fornecedor + itens), ambas com fallback de modelo.
+  - ⚠️ O gateway OpenCode Go **não expõe modelos Claude** (lista em `/models`); para Claude real, apontar `AI_BASE_URL` para a API da Anthropic.
+- **Schema novo**: `Supplier` (fornecedores via OCR), `ProductChannel` (canais por produto, enum `ProductChannelType`), status `em_revisao`, e campos da ficha no `Product` (tipoPeca, material, corAcabamento, estilo, colecao, tags, precoCusto, estoqueMinimo, pesoGramas, dimensoes, dataEntrada, skuInterno, instrucoesConservacao). Migration: `20260810000000_modulo2_ficha_unificada`.
+- **API**: `SuppliersModule` (CRUD + `upsertByDocument`), endpoints `POST /products/analyze-image`, `POST /products/extract-invoice`, `GET /products/:id/label` (dados p/ etiqueta), `POST /products/:id/approve`; products ampliado com SKU automático (`PUL-XXXX`), detecção de duplicata (por SKU ou similaridade de nome ≥60%) e campos novos.
+- **Web**: página `produtos/novo` e `produtos/[id]/editar` com 3 abas (Foto IA / Nota fiscal OCR / Manual), página `produtos/[id]/etiqueta` (etiqueta imprimível com código de barras CODE128 em SVG, sem dependência), página `fornecedores` (CRUD), nav "Fornecedores".
+- **Build local no Windows**: `next.config.mjs` só ativa `output: "standalone"` quando `NEXT_OUTPUT=standalone` (Dockerfile web seta isso) — o copytrace do standalone quebra no Windows com EPERM nos symlinks do pnpm.
+- **Zod unificado**: override no `package.json` raiz (`pnpm.overrides.zod = 4.4.3`) — resolve o conflito de tipos `@hookform/resolvers` (que via o zod 3.25.76 do virtual store, com `_zod.version.minor: 0`, contra o zod 4.4.3 do app). Sem isso o `next build` falha em 5 formulários com TS2769.
+
+---
+
+## 12. Decisões já fechadas (não reabrir sem o usuário)
 
 | Ponto | Decisão |
 |---|---|

@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Package,
+  Truck,
   ShoppingBag,
   Users,
   Heart,
@@ -23,6 +24,7 @@ export interface NavItem {
 export const PAINEL_NAV: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Produtos", href: "/produtos", icon: Package },
+  { label: "Fornecedores", href: "/fornecedores", icon: Truck },
   { label: "Pedidos", href: "/pedidos", icon: ShoppingBag },
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Afiliadas", href: "/afiliadas", icon: Heart },

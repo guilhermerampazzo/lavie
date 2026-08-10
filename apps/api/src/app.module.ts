@@ -24,6 +24,7 @@ import { ConversationsModule } from './conversations/conversations.module';
 import { MessageTemplatesModule } from './message-templates/message-templates.module';
 import { BlingModule } from './bling/bling.module';
 import { SettingsModule } from './settings/settings.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { SettingsModule } from './settings/settings.module';
     MessageTemplatesModule,
     BlingModule,
     SettingsModule,
+    SuppliersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

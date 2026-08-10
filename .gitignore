@@ -31,3 +31,7 @@ packages/db/generated/
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# Migração Wix -> Nuvemshop (contém credenciais/tokens em texto puro)
+/wix/
+/escopofinal.pdf

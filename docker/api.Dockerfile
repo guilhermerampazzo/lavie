@@ -7,6 +7,7 @@ FROM base AS deps
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/db/package.json packages/db/package.json
+COPY packages/ai/package.json packages/ai/package.json
 COPY packages/nuvemshop/package.json packages/nuvemshop/package.json
 COPY packages/bling/package.json packages/bling/package.json
 COPY packages/evolution/package.json packages/evolution/package.json

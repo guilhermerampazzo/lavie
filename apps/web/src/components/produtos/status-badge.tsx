@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 const STATUS_MAP = {
   active: { label: "Ativo", cls: "bg-success/10 text-success" },
   draft: { label: "Rascunho", cls: "bg-warning/10 text-warning" },
+  em_revisao: { label: "Em revisão", cls: "bg-warning/10 text-warning" },
   inactive: { label: "Inativo", cls: "bg-danger/10 text-danger" },
 } as const;
 

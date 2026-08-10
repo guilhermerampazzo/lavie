@@ -56,7 +56,17 @@ export class SyncService {
   ): Promise<NuvemshopEntity[]> {
     const all: NuvemshopEntity[] = [];
     for (let page = 1; page <= maxPages; page++) {
-      const items = await fetchPage(page);
+      let items: NuvemshopEntity[];
+      try {
+        items = await fetchPage(page);
+      } catch (err) {
+        // Loja sem nenhum registro dessa entidade: a API retorna 404
+        // "Last page is 0" em vez de uma lista vazia com 200.
+        if (page === 1 && err instanceof Error && /Last page is 0/i.test(err.message)) {
+          break;
+        }
+        throw err;
+      }
       if (!items || items.length === 0) break;
       all.push(...items);
       if (items.length < 200) break;

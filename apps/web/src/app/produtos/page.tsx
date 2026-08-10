@@ -76,7 +76,7 @@ export default async function ProdutosPage() {
                           <span>
                             <span className="block font-medium text-ink">{p.nomeGerado}</span>
                             <span className="block text-[11px] text-muted-foreground">
-                              SKU {p.variants[0]?.sku ?? "-"}
+                              {p.skuInterno ?? p.variants[0]?.sku ?? "-"}
                             </span>
                           </span>
                         </Link>

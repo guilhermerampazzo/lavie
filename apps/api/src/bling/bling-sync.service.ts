@@ -31,6 +31,8 @@ interface BlingConta {
 @Injectable()
 export class BlingSyncService {
   private readonly logger = new Logger(BlingSyncService.name);
+  /** Cache da validação (60s) — evita bater na API do Bling a cada request. */
+  private validationCache: { at: number; result: { connected: boolean; error?: string | null } } | null = null;
 
   constructor(
     private readonly bling: BlingService,
@@ -41,18 +43,35 @@ export class BlingSyncService {
     return this.bling.isConnected();
   }
 
-  /** Valida o token atual com chamada real. */
+  /** Valida o token atual com chamada real (com cache de 60s). */
   async validateConnection() {
+    if (this.validationCache && Date.now() - this.validationCache.at < 60_000) {
+      return this.validationCache.result;
+    }
+    let result: { connected: boolean; error?: string | null };
     if (!(await this.bling.isConnected())) {
-      return { connected: false, error: 'Sem token salvo (OAuth não concluído).' };
+      result = { connected: false, error: 'Sem token salvo (OAuth não concluído).' };
+    } else {
+      try {
+        const client = await this.bling.getClient();
+        const check = await client.validateToken();
+        if (check.ok) {
+          result = { connected: true, error: null };
+        } else if (check.status === 401 || check.status === 403) {
+          result = {
+            connected: false,
+            error:
+              'Token do Bling expirado ou inválido — clique em "Conectar ao Bling" em /configuracoes para reconectar (a renovação automática não conseguiu atualizar).',
+          };
+        } else {
+          result = { connected: false, error: check.error ?? 'Falha ao validar conexão com o Bling.' };
+        }
+      } catch (err) {
+        result = { connected: false, error: (err as Error).message.slice(0, 300) };
+      }
     }
-    try {
-      const client = await this.bling.getClient();
-      const result = await client.validateToken();
-      return { connected: result.ok, error: result.error ?? null };
-    } catch (err) {
-      return { connected: false, error: (err as Error).message.slice(0, 300) };
-    }
+    this.validationCache = { at: Date.now(), result };
+    return result;
   }
 
   /** Puxa notas fiscais (NF-e emitidas) do Bling para a tabela Invoice. */

@@ -137,7 +137,7 @@ export function CredentialsPanel({
             type="button"
             disabled={saving === channel}
             onClick={() => handleSave(channel)}
-            className="mt-3 flex h-8 items-center justify-center gap-1.5 rounded-btn bg-brand text-[12px] font-medium text-white hover:bg-brand-dark disabled:opacity-50"
+            className="mt-4 flex h-9 w-full items-center justify-center gap-1.5 rounded-btn bg-brand px-4 text-[12px] font-medium text-white hover:bg-brand-dark disabled:opacity-50"
           >
             {saving === channel ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
             Salvar credenciais

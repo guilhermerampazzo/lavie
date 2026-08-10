@@ -7,6 +7,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { NuvemshopService } from '../nuvemshop/nuvemshop.service';
 import { BlingService } from '../bling/bling.service';
+import { BlingSyncService } from '../bling/bling-sync.service';
 import { EvolutionService } from '../evolution/evolution.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { SyncJobData } from '../sync/sync.processor';
@@ -24,6 +25,7 @@ export class SettingsController {
   constructor(
     private readonly nuvemshop: NuvemshopService,
     private readonly bling: BlingService,
+    private readonly blingSync: BlingSyncService,
     private readonly evolution: EvolutionService,
     private readonly prisma: PrismaService,
     @InjectQueue('sync-jobs') private readonly syncQueue: Queue<SyncJobData>,
@@ -31,10 +33,12 @@ export class SettingsController {
 
   @Get('integrations')
   async integrations() {
+    const blingStatus = await this.blingSync.validateConnection();
     return {
       nuvemshop: { configured: this.nuvemshop.configured, label: 'Nuvemshop' },
       bling: {
-        configured: await this.bling.isConnected(),
+        configured: blingStatus.connected,
+        error: blingStatus.error ?? null,
         canConnect: this.bling.hasClientCredentials(),
         label: 'Bling (fiscal/financeiro)',
       },

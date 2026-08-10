@@ -15,7 +15,7 @@ interface IntegrationStatus {
 
 interface IntegrationsResponse {
   nuvemshop: IntegrationStatus;
-  bling: IntegrationStatus & { canConnect: boolean };
+  bling: IntegrationStatus & { canConnect: boolean; error?: string | null };
   evolution: IntegrationStatus;
 }
 
@@ -60,16 +60,27 @@ export default async function ConfiguracoesPage({
             </p>
             {integrations ? (
               <div className="flex flex-col">
-                {(["nuvemshop", "bling", "evolution"] as const).map((key) => {
-                  const item = integrations[key];
+                {([
+                  ["nuvemshop", integrations.nuvemshop],
+                  ["bling", integrations.bling],
+                  ["evolution", integrations.evolution],
+                ] as const).map(([key, item]) => {
+                  const isBling = key === "bling";
                   return (
                     <div
                       key={key}
                       className="flex items-center justify-between border-b border-line/60 py-2.5 text-[12.5px] last:border-0"
                     >
-                      <span>{item.label}</span>
+                      <div>
+                        <span>{item.label}</span>
+                        {isBling && !item.configured && "error" in item && item.error && (
+                          <p className="mt-0.5 max-w-[380px] text-[10.5px] leading-snug text-warning">
+                            {item.error}
+                          </p>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
-                        {key === "bling" && !item.configured && integrations.bling.canConnect && (
+                        {isBling && !item.configured && "canConnect" in item && item.canConnect && (
                           <a
                             href="/api/bling/authorize"
                             className="rounded-btn border border-brand px-2 py-1 text-[11px] font-medium text-brand-dark hover:bg-brand-soft/50"

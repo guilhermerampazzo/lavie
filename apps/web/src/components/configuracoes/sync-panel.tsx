@@ -52,7 +52,7 @@ export function SyncPanel({ jobs, disabled }: { jobs: SyncJobItem[]; disabled: b
           type="button"
           disabled={loading || disabled}
           onClick={syncAll}
-          className="rounded-btn bg-brand text-white hover:bg-brand-dark"
+          className="rounded-btn bg-brand px-4 text-white hover:bg-brand-dark"
         >
           <RefreshCw className={loading ? "mr-1.5 size-3.5 animate-spin" : "mr-1.5 size-3.5"} />
           {loading ? "Iniciando…" : "Sincronizar tudo"}

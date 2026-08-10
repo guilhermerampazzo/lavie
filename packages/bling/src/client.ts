@@ -93,13 +93,15 @@ export class BlingClient {
     byProduct: (id: string | number) => this.request(`/produtos/${id}/estoques`),
   };
 
-  /** Testa se o token é válido com uma chamada leve. */
-  async validateToken(): Promise<{ ok: boolean; error?: string }> {
+  /** Testa se o token é válido com uma chamada leve (produtos existe na API v3). */
+  async validateToken(): Promise<{ ok: boolean; error?: string; status?: number }> {
     try {
-      await this.request('/departamentos?limite=1');
+      await this.request('/produtos?limite=1');
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: (err as Error).message.slice(0, 200) };
+      const message = (err as Error).message;
+      const status = Number(message.match(/error (\d+)/)?.[1] ?? 0);
+      return { ok: false, error: message.slice(0, 200), status };
     }
   }
 }

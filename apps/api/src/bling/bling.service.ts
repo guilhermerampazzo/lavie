@@ -6,14 +6,13 @@ import { PrismaService } from '../prisma/prisma.service';
 const SETTING_KEY = 'bling_oauth';
 
 /**
- * Endpoints OAuth2 da API v3 do Bling. Seguem o padrao documentado em
- * developer.bling.com.br/aplicativos, mas a pagina de docs e renderizada
- * via JS e nao foi possivel confirmar a URL literal por scraping — testar
- * de verdade assim que houver client_id/client_secret reais (escopo.md
- * secao 16 ja marcava isso como pendente de levantamento).
+ * Endpoints OAuth2 da API v3 do Bling. VALIDADO em produção (2026-08):
+ * a API v3 usa o host `api.bling.com.br` — tokens JWT são recusados em
+ * www.bling.com.br (FORBIDDEN "Tokens JWT só são permitidos quando a
+ * requisição passa pelo host api.bling.com.br").
  */
-const BLING_AUTHORIZE_URL = 'https://www.bling.com.br/Api/v3/oauth/authorize';
-const BLING_TOKEN_URL = 'https://www.bling.com.br/Api/v3/oauth/token';
+const BLING_AUTHORIZE_URL = 'https://api.bling.com.br/Api/v3/oauth/authorize';
+const BLING_TOKEN_URL = 'https://api.bling.com.br/Api/v3/oauth/token';
 
 interface StoredTokens {
   accessToken: string;

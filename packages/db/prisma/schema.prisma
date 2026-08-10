@@ -680,6 +680,8 @@ model Conversation {
   updatedAt  DateTime           @updatedAt
 
   messages Message[]
+
+  @@unique([contact, channel])
 }
 
 model Message {

@@ -40,6 +40,47 @@ export class ReportsService {
   }
 
   /**
+   * Comparativo entre dois períodos (escopofinal.md 10.1 — comparação de
+   * períodos): vendas, ticket médio e variação % entre os dois intervalos.
+   */
+  async comparePeriods(from: Date, to: Date, compareFrom: Date, compareTo: Date) {
+    const [current, previous] = await Promise.all([
+      this.salesReport(from, to),
+      this.salesReport(compareFrom, compareTo),
+    ]);
+
+    const pct = (cur: number, prev: number) => (prev === 0 ? (cur > 0 ? null : 0) : ((cur - prev) / prev) * 100);
+
+    return {
+      current: {
+        from: from.toISOString(),
+        to: to.toISOString(),
+        totalOrders: current.totalOrders,
+        totalRevenue: current.totalRevenue,
+        avgTicket: current.totalOrders > 0 ? current.totalRevenue / current.totalOrders : 0,
+        byChannel: current.byChannel,
+        byDay: current.byDay,
+      },
+      previous: {
+        from: compareFrom.toISOString(),
+        to: compareTo.toISOString(),
+        totalOrders: previous.totalOrders,
+        totalRevenue: previous.totalRevenue,
+        avgTicket: previous.totalOrders > 0 ? previous.totalRevenue / previous.totalOrders : 0,
+        byChannel: previous.byChannel,
+      },
+      changes: {
+        revenueChange: pct(current.totalRevenue, previous.totalRevenue),
+        ordersChange: pct(current.totalOrders, previous.totalOrders),
+        avgTicketChange: pct(
+          current.totalOrders > 0 ? current.totalRevenue / current.totalOrders : 0,
+          previous.totalOrders > 0 ? previous.totalRevenue / previous.totalOrders : 0,
+        ),
+      },
+    };
+  }
+
+  /**
    * Relatório de afiliadas (escopofinal.md 10.2): conversões, receita,
    * comissões e ROI por afiliada no período.
    */

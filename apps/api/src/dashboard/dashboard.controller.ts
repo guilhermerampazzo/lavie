@@ -11,7 +11,7 @@ export class DashboardController {
   constructor(private readonly service: DashboardService) {}
 
   @Get('metrics')
-  metrics(@Query('period') period?: 'today' | 'week' | 'month') {
+  metrics(@Query('period') period?: 'today' | 'week' | 'month' | 'quarter' | 'year') {
     return this.service.metrics(period ?? 'month');
   }
 

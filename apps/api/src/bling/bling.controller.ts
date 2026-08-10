@@ -1,34 +1,34 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
-import type { Response } from 'express';
-import { randomBytes } from 'crypto';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { BlingService } from './bling.service';
+import { BlingSyncService } from './bling-sync.service';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'equipe')
 @Controller('bling')
 export class BlingController {
-  constructor(private readonly bling: BlingService) {}
+  constructor(
+    private readonly service: BlingService,
+    private readonly syncService: BlingSyncService,
+  ) {}
 
-  @Get('authorize')
-  authorize(@Res() res: Response) {
-    if (!this.bling.hasClientCredentials()) {
-      return res.status(400).send('BLING_CLIENT_ID/BLING_CLIENT_SECRET não configurados no .env.');
-    }
-    const state = randomBytes(16).toString('hex');
-    return res.redirect(this.bling.buildAuthorizeUrl(state));
+  /** Estado da conexão (validada com chamada real). */
+  @Get('status')
+  status() {
+    return this.syncService.validateConnection();
   }
 
-  @Get('callback')
-  async callback(@Query('code') code: string, @Query('error') error: string, @Res() res: Response) {
-    const publicUrl = process.env.PUBLIC_URL ?? '';
+  /** Dados consolidados para o painel (NFs, contas, resumo). */
+  @Get('dashboard')
+  dashboard() {
+    return this.syncService.dashboard();
+  }
 
-    if (error || !code) {
-      return res.redirect(`${publicUrl}/configuracoes?bling=erro`);
-    }
-
-    try {
-      await this.bling.exchangeCode(code);
-      return res.redirect(`${publicUrl}/configuracoes?bling=conectado`);
-    } catch {
-      return res.redirect(`${publicUrl}/configuracoes?bling=erro`);
-    }
+  /** Sincroniza NFs + contas a receber/pagar do Bling para o banco. */
+  @Post('sync')
+  sync() {
+    return this.syncService.syncAll();
   }
 }

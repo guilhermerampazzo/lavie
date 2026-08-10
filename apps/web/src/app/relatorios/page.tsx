@@ -5,8 +5,10 @@ import { SalesChart } from "@/components/dashboard/sales-chart";
 import { RevenueLineChart } from "@/components/dashboard/line-chart";
 import { ExportButton } from "@/components/relatorios/export-button";
 import { SnapshotButton } from "@/components/relatorios/snapshot-button";
+import { PeriodCompareSelector } from "@/components/relatorios/period-compare-selector";
+import { ComparePanel } from "@/components/relatorios/compare-panel";
 import type { SalesReport } from "@/types/dashboard";
-import type { AffiliateReport, FinancialReport } from "@/types/reports";
+import type { AffiliateReport, FinancialReport, PeriodComparison } from "@/types/reports";
 
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -15,13 +17,18 @@ function formatBRL(value: number) {
 export default async function RelatoriosPage({
   searchParams,
 }: {
-  searchParams: { tab?: string };
+  searchParams: { tab?: string; from?: string; to?: string; compareFrom?: string; compareTo?: string };
 }) {
   const session = await auth();
   const tab = (searchParams.tab ?? "vendas") as "vendas" | "afiliadas" | "financeiro";
+  const { from, to, compareFrom, compareTo } = searchParams;
 
-  const [sales, affiliates, financial] = await Promise.all([
-    apiServerFetch<SalesReport>("/reports/sales").catch(
+  const range = (from && to ? `?from=${from}&to=${to}` : "");
+  const compareRange =
+    compareFrom && compareTo ? `&compareFrom=${compareFrom}&compareTo=${compareTo}` : "";
+
+  const [sales, affiliates, financial, comparison] = await Promise.all([
+    apiServerFetch<SalesReport>(`/reports/sales${range}`).catch(
       () => ({ totalOrders: 0, totalRevenue: 0, byChannel: [], byCategory: [], byDay: [] }) as SalesReport,
     ),
     apiServerFetch<AffiliateReport>("/reports/affiliates").catch(
@@ -34,6 +41,9 @@ export default async function RelatoriosPage({
           expenses: 0, receivables: 0, netProfit: 0, netMargin: 0, marginByProduct: [],
         }) as FinancialReport,
     ),
+    compareFrom && compareTo
+      ? apiServerFetch<PeriodComparison>(`/reports/compare${range}${compareRange}`).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const TABS = [
@@ -57,7 +67,7 @@ export default async function RelatoriosPage({
         </div>
 
         {/* Abas */}
-        <div className="mb-5 flex overflow-hidden rounded-lg border border-line">
+        <div className="mb-3 flex overflow-hidden rounded-lg border border-line">
           {TABS.map((t) => (
             <a
               key={t.value}
@@ -70,6 +80,12 @@ export default async function RelatoriosPage({
             </a>
           ))}
         </div>
+
+        <div className="mb-5">
+          <PeriodCompareSelector tab={tab} from={from} to={to} compareFrom={compareFrom} compareTo={compareTo} />
+        </div>
+
+        {comparison && <ComparePanel comparison={comparison} />}
 
         {tab === "vendas" && (
           <>

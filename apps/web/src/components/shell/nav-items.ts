@@ -16,6 +16,7 @@ import {
   Boxes,
   RotateCcw,
   Tag,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 
@@ -38,6 +39,8 @@ export const PAINEL_NAV: NavItem[] = [
   { label: "Mapa", href: "/mapa", icon: MapPin },
   { label: "Cupons", href: "/cupons", icon: Ticket },
   { label: "Financeiro", href: "/financeiro", icon: Wallet },
+  { label: "Bling (ERP)", href: "/bling", icon: Landmark },
+  { label: "Marketplaces", href: "/marketplaces", icon: Store },
   { label: "Trocas", href: "/trocas", icon: RotateCcw },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
   { label: "Atendimento", href: "/atendimento", icon: MessageCircle },

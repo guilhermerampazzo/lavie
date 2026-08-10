@@ -1,9 +1,9 @@
 import { EvolutionConfig } from './config';
 
 /**
- * Client tipado para o Evolution API v2.3.7 (WhatsApp — Fase 4, CLAUDE.md secao 3).
- * Nasce agora com a estrutura basica; os fluxos de atendimento/automacao
- * so entram quando a Fase 4 comecar.
+ * Client tipado para o Evolution API v2.3.7 (WhatsApp — Fase 4).
+ * Endpoints validados em produção (2026-08): connectionState, fetchInstances,
+ * setWebhook, findChats, message.sendText.
  */
 export class EvolutionClient {
   constructor(private readonly config: EvolutionConfig) {}
@@ -26,10 +26,23 @@ export class EvolutionClient {
   instances = {
     status: (instanceName: string) => this.request(`/instance/connectionState/${instanceName}`),
     create: (data: unknown) => this.request('/instance/create', { method: 'POST', body: JSON.stringify(data) }),
+    fetchAll: () => this.request('/instance/fetchInstances'),
+    connect: (instanceName: string) => this.request(`/instance/connect/${instanceName}`, { method: 'POST' }),
+    logout: (instanceName: string) => this.request(`/instance/logout/${instanceName}`, { method: 'POST' }),
+    setWebhook: (instanceName: string, data: unknown) =>
+      this.request(`/webhook/set/${instanceName}`, { method: 'POST', body: JSON.stringify(data) }),
+    findWebhooks: (instanceName: string) => this.request(`/webhook/find/${instanceName}`),
   };
 
   messages = {
     sendText: (instanceName: string, data: unknown) =>
       this.request(`/message/sendText/${instanceName}`, { method: 'POST', body: JSON.stringify(data) }),
+  };
+
+  chats = {
+    find: (instanceName: string, params: Record<string, string | number> = {}) => {
+      const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
+      return this.request(`/chat/findChats/${instanceName}?${qs.toString()}`);
+    },
   };
 }

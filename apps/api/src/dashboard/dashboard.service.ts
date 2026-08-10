@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CustomersService } from '../customers/customers.service';
 
-type Period = 'today' | 'week' | 'month';
+type Period = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
 function startOfPeriod(period: Period, offset = 0): Date {
   const now = new Date();
@@ -15,6 +15,13 @@ function startOfPeriod(period: Period, offset = 0): Date {
     const d = new Date(now);
     d.setDate(d.getDate() - 7 * (offset + 1));
     return d;
+  }
+  if (period === 'quarter') {
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    return new Date(now.getFullYear(), (currentQuarter - offset) * 3, 1);
+  }
+  if (period === 'year') {
+    return new Date(now.getFullYear() - offset, 0, 1);
   }
   // month
   const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);

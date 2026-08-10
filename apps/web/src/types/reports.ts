@@ -27,3 +27,28 @@ export interface FinancialReport {
   netMargin: number;
   marginByProduct: Array<{ nome: string; revenue: number; custo: number; margin: number }>;
 }
+
+export interface PeriodComparison {
+  current: {
+    from: string;
+    to: string;
+    totalOrders: number;
+    totalRevenue: number;
+    avgTicket: number;
+    byChannel: Array<{ channel: string; total: number }>;
+    byDay: Array<{ day: string; total: number }>;
+  };
+  previous: {
+    from: string;
+    to: string;
+    totalOrders: number;
+    totalRevenue: number;
+    avgTicket: number;
+    byChannel: Array<{ channel: string; total: number }>;
+  };
+  changes: {
+    revenueChange: number | null;
+    ordersChange: number | null;
+    avgTicketChange: number | null;
+  };
+}

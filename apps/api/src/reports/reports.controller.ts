@@ -30,6 +30,27 @@ export class ReportsController {
     return this.service.salesReport(fromDate, toDate);
   }
 
+  /**
+   * Comparação entre períodos: ?from=&to= (período atual) e
+   * ?compareFrom=&compareTo= (período anterior). Se omitido o anterior,
+   * calcula o período de mesma duração imediatamente anterior.
+   */
+  @Get('compare')
+  compare(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('compareFrom') compareFrom?: string,
+    @Query('compareTo') compareTo?: string,
+  ) {
+    const { fromDate, toDate } = parseRange(from, to);
+    const duration = toDate.getTime() - fromDate.getTime();
+    const prevTo = compareTo ? new Date(compareTo) : new Date(fromDate.getTime() - 1);
+    const prevFrom = compareFrom
+      ? new Date(compareFrom)
+      : new Date(prevTo.getTime() - duration);
+    return this.service.comparePeriods(fromDate, toDate, prevFrom, prevTo);
+  }
+
   @Get('affiliates')
   affiliates(@Query('from') from?: string, @Query('to') to?: string) {
     const { fromDate, toDate } = parseRange(from, to);

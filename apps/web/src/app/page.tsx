@@ -45,6 +45,8 @@ const PERIODS = [
   { value: "today", label: "Hoje" },
   { value: "week", label: "Semana" },
   { value: "month", label: "Mês" },
+  { value: "quarter", label: "Trimestre" },
+  { value: "year", label: "Ano" },
 ] as const;
 
 export default async function Home({
@@ -53,7 +55,7 @@ export default async function Home({
   searchParams: { period?: string };
 }) {
   const session = await auth();
-  const period = (searchParams.period ?? "month") as "today" | "week" | "month";
+  const period = (searchParams.period ?? "month") as "today" | "week" | "month" | "quarter" | "year";
 
   if (session?.user?.role === "revendedora") {
     return null;

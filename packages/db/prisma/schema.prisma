@@ -81,7 +81,7 @@ model Product {
   id                 String  @id @default(cuid())
   nuvemshopProductId String? @unique
 
-  // Campos variaveis do template (escopo.md 8.3) — nulos quando o produto
+  // Campos variaveis do template (escopo.md 8.3) - nulos quando o produto
   // veio de import da Nuvemshop em vez do fluxo de template do CRM.
   nomePeca       String?
   banhoMaterial  String?
@@ -94,7 +94,7 @@ model Product {
   nomeGerado      String
   descricaoGerada String @db.Text
 
-  // --- Módulo 2 — ficha unificada (escopofinal.md seção 3) ---
+  // --- Módulo 2 - ficha unificada (escopofinal.md seção 3) ---
   // Identificação
   skuInterno            String?  @unique // SKU principal gerado pelo sistema
   tags                  String[] @default([])
@@ -166,7 +166,7 @@ model ProductImage {
 }
 
 // ---------------------------------------------------------------------------
-// Fornecedores (escopofinal.md seção 3 — OCR de NF)
+// Fornecedores (escopofinal.md seção 3 - OCR de NF)
 // ---------------------------------------------------------------------------
 
 model Supplier {
@@ -259,16 +259,21 @@ model Customer {
   phone               String?
   document            String?
   city                String?
-  state               String?
+  state                String?
   birthDate           DateTime?
-  segments            CustomerSegment[]
-  loyaltyPoints       LoyaltyPoints?
-  orders              Order[]
-  notes               String?           @db.Text
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  segments             CustomerSegment[]
+  loyaltyPoints         LoyaltyPoints?
+  orders                Order[]
+  notes                 String?          @db.Text
+  // Módulo 4 - marcação para inclusão no grupo VIP do WhatsApp
+  whatsappVip          Boolean           @default(false)
+  createdAt              DateTime         @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  automationLogs       AutomationLog[]
 
   @@index([segments])
+  @@index([whatsappVip])
 }
 
 model LoyaltyPoints {
@@ -303,6 +308,20 @@ model Affiliate {
   trackingLinks TrackingLink[]
   commissions   Commission[]
   campaigns     Campaign[]
+  materials     AffiliateMaterial[]
+}
+
+// Material de divulgação (Módulo 4 - biblioteca de imagens/textos para afiliadas).
+model AffiliateMaterial {
+  id          String   @id @default(cuid())
+  affiliateId String?
+  affiliate   Affiliate? @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  title       String
+  kind        String   // text | image | pdf
+  content     String   @db.Text // texto pronto ou URL do arquivo (MinIO)
+  createdAt   DateTime @default(now())
+
+  @@index([affiliateId])
 }
 
 model TrackingLink {
@@ -469,7 +488,7 @@ model OrderItem {
 }
 
 // ---------------------------------------------------------------------------
-// Automacao / Atendimento (fase 4 — Evolution API)
+// Automacao / Atendimento (fase 4 - Evolution API)
 // ---------------------------------------------------------------------------
 
 enum ConversationStatus {
@@ -481,10 +500,29 @@ enum ConversationStatus {
 model MessageTemplate {
   id        String   @id @default(cuid())
   name      String
-  trigger   String // boas-vindas, pos-compra, reativacao, aniversario, carrinho_abandonado...
+  trigger   String   // boas-vindas, pos-compra, reativacao, aniversario, carrinho_abandonado...
   content   String   @db.Text
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+//
+// Log de disparos de automação (Módulo 4 - follow-up automático).
+// Garante dedupe: um mesmo trigger não dispara duas vezes para o mesmo
+// cliente/alvo (ex.: aniversário 1x por ano, pós-compra 1x por pedido).
+//
+model AutomationLog {
+  id         String   @id @default(cuid())
+  trigger    String
+  targetId   String   // customerId (ou orderId p/ pos-compra)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  status     String   // sent | skipped_no_template | failed | no_evolution
+  detail     String?
+  sentAt     DateTime @default(now())
+
+  @@unique([trigger, targetId])
+  @@index([trigger, customerId])
 }
 
 model Conversation {

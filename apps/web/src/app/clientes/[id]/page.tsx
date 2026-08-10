@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { apiServerFetch, ApiError } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { SegmentBadge } from "@/components/clientes/segment-badge";
+import { VipToggle } from "@/components/clientes/vip-toggle";
 import type { Customer } from "@/types/people";
 
 function formatBRL(value: number | string) {
@@ -41,6 +42,7 @@ export default async function ClienteDetalhePage({ params }: { params: { id: str
               ) : (
                 customer.segments.map((s) => <SegmentBadge key={s} segment={s} />)
               )}
+              <VipToggle customerId={customer.id} initial={customer.whatsappVip ?? false} />
             </div>
           </div>
         </div>
@@ -92,10 +94,33 @@ export default async function ClienteDetalhePage({ params }: { params: { id: str
               <span>Pedidos</span>
               <span className="tabular-nums font-medium">{customer.ordersCount}</span>
             </div>
-            <div className="flex items-center justify-between py-2 text-[12.5px]">
+            <div className="flex items-center justify-between border-b border-line py-2 text-[12.5px]">
               <span>Total gasto</span>
               <span className="tabular-nums font-medium">{formatBRL(customer.totalSpent)}</span>
             </div>
+
+            {customer.preferencias && customer.preferencias.tiposPreferidos.length > 0 && (
+              <>
+                <p className="mb-2 mt-5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Preferências (do histórico)
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {customer.preferencias.tiposPreferidos.map((t) => (
+                    <span key={t} className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] capitalize text-brand-dark">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                {customer.preferencias.faixaPreco ? (
+                  <p className="mt-2 text-[11.5px] text-muted-foreground">
+                    Ticket habitual:{" "}
+                    <span className="font-medium tabular-nums">
+                      {formatBRL(customer.preferencias.faixaPreco)}
+                    </span>
+                  </p>
+                ) : null}
+              </>
+            )}
 
             <p className="mb-2 mt-5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Contato

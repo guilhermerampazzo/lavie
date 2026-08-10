@@ -23,7 +23,14 @@ export const createCommissionSchema = z.object({
   status: z.enum(['pendente', 'aprovado', 'pago']).optional(),
 });
 
+export const createAffiliateMaterialSchema = z.object({
+  title: z.string().min(1),
+  kind: z.enum(['text', 'image', 'pdf']).default('text'),
+  content: z.string().min(1),
+});
+
 export type CreateAffiliateDto = z.infer<typeof createAffiliateSchema>;
 export type UpdateAffiliateDto = z.infer<typeof updateAffiliateSchema>;
 export type CreateTrackingLinkDto = z.infer<typeof createTrackingLinkSchema>;
 export type CreateCommissionDto = z.infer<typeof createCommissionSchema>;
+export type CreateAffiliateMaterialDto = z.infer<typeof createAffiliateMaterialSchema>;

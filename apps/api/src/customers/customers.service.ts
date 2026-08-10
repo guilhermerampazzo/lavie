@@ -31,6 +31,37 @@ export class CustomersService {
     return { ...customer, segments, ordersCount, totalSpent };
   }
 
+  /**
+   * Preferências extraídas do histórico (escopofinal.md 5.1): tipos de peça
+   * mais comprados e faixa de preço habitual, derivados dos pedidos.
+   */
+  private async withPreferences<T extends { id: string }>(customer: T) {
+    const orders = await this.prisma.client.order.findMany({
+      where: { customerId: customer.id, status: { not: 'cancelado' } },
+      include: { items: { include: { product: { select: { tipoPeca: true, category: { select: { name: true } } } } } } },
+    });
+
+    const tipoCount = new Map<string, number>();
+    let totalSpent = 0;
+    for (const o of orders) {
+      totalSpent += Number(o.total);
+      for (const item of o.items) {
+        const tipo = item.product?.tipoPeca ?? item.product?.category?.name ?? 'outro';
+        tipoCount.set(tipo, (tipoCount.get(tipo) ?? 0) + item.quantity);
+      }
+    }
+
+    const preferencias = {
+      tiposPreferidos: Array.from(tipoCount.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([tipo]) => tipo),
+      faixaPreco: totalSpent > 0 && orders.length > 0 ? totalSpent / orders.length : null,
+    };
+
+    return { ...customer, preferencias };
+  }
+
   async list(params: { segment?: string; search?: string }) {
     const customers = await this.prisma.client.customer.findMany({
       where: {
@@ -54,7 +85,8 @@ export class CustomersService {
       },
     });
     if (!customer) throw new NotFoundException('Cliente não encontrado');
-    return this.withSegments(customer);
+    const enriched = await this.withSegments(customer);
+    return this.withPreferences(enriched);
   }
 
   create(dto: CreateCustomerDto) {

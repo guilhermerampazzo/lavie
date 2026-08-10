@@ -27,9 +27,14 @@ export interface Customer {
   state?: string | null;
   birthDate?: string | null;
   notes?: string | null;
+  whatsappVip?: boolean;
   segments: CustomerSegment[];
   ordersCount: number;
   totalSpent: number;
+  preferencias?: {
+    tiposPreferidos: string[];
+    faixaPreco: number | null;
+  };
   loyaltyPoints?: { points: number } | null;
   orders?: Order[];
   createdAt: string;

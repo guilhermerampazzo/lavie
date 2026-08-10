@@ -5,6 +5,7 @@ import {
   UpdateAffiliateDto,
   CreateTrackingLinkDto,
   CreateCommissionDto,
+  CreateAffiliateMaterialDto,
 } from './dto/affiliate.dto';
 
 @Injectable()
@@ -63,5 +64,30 @@ export class AffiliatesService {
     return this.prisma.client.commission.create({
       data: { affiliateId, amount: dto.amount, orderId: dto.orderId, status: dto.status ?? 'pendente' },
     });
+  }
+
+  // --- Material de divulgação (escopofinal.md 5.3) ---
+
+  listMaterials(affiliateId?: string) {
+    return this.prisma.client.affiliateMaterial.findMany({
+      where: affiliateId ? { affiliateId } : undefined,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  createMaterial(dto: CreateAffiliateMaterialDto, affiliateId?: string) {
+    if (affiliateId) {
+      // valida que a afiliada existe
+      return this.get(affiliateId).then(() =>
+        this.prisma.client.affiliateMaterial.create({ data: { ...dto, affiliateId } }),
+      );
+    }
+    return this.prisma.client.affiliateMaterial.create({ data: { ...dto, affiliateId: null } });
+  }
+
+  async removeMaterial(id: string) {
+    const material = await this.prisma.client.affiliateMaterial.findUnique({ where: { id } });
+    if (!material) throw new NotFoundException('Material não encontrado');
+    return this.prisma.client.affiliateMaterial.delete({ where: { id } });
   }
 }

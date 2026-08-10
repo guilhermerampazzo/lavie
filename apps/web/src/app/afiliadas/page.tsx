@@ -5,6 +5,10 @@ import { AppShell } from "@/components/shell/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { Affiliate } from "@/types/people";
 import { NewAffiliateSheet } from "@/components/afiliadas/new-affiliate-sheet";
+import {
+  MaterialsPanel,
+  type AffiliateMaterialItem,
+} from "@/components/afiliadas/materials-panel";
 
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -12,7 +16,10 @@ function formatBRL(value: number) {
 
 export default async function AfiliadasPage() {
   const session = await auth();
-  const affiliates = await apiServerFetch<Affiliate[]>("/affiliates").catch(() => [] as Affiliate[]);
+  const [affiliates, materials] = await Promise.all([
+    apiServerFetch<Affiliate[]>("/affiliates").catch(() => [] as Affiliate[]),
+    apiServerFetch<AffiliateMaterialItem[]>("/affiliates/materials/all").catch(() => [] as AffiliateMaterialItem[]),
+  ]);
   const commissionPending = affiliates.reduce((sum, a) => sum + a.commissionPending, 0);
 
   return (
@@ -102,6 +109,10 @@ export default async function AfiliadasPage() {
             </div>
           </>
         )}
+
+        <div className="mt-5">
+          <MaterialsPanel materials={materials} />
+        </div>
       </div>
     </AppShell>
   );

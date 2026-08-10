@@ -25,6 +25,7 @@ import { MessageTemplatesModule } from './message-templates/message-templates.mo
 import { BlingModule } from './bling/bling.module';
 import { SettingsModule } from './settings/settings.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
+import { AutomationsModule } from './automations/automations.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SuppliersModule } from './suppliers/suppliers.module';
     BlingModule,
     SettingsModule,
     SuppliersModule,
+    AutomationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

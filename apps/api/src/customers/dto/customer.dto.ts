@@ -9,6 +9,7 @@ export const createCustomerSchema = z.object({
   state: z.string().optional(),
   birthDate: z.string().datetime().optional(),
   notes: z.string().optional(),
+  whatsappVip: z.boolean().optional(),
 });
 
 export const updateCustomerSchema = createCustomerSchema.partial();

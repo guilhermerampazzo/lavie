@@ -9,5 +9,6 @@ import { SuppliersModule } from '../suppliers/suppliers.module';
   imports: [NuvemshopModule, SuppliersModule],
   controllers: [ProductsController],
   providers: [ProductsService, AiService],
+  exports: [ProductsService],
 })
 export class ProductsModule {}

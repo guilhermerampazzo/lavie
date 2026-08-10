@@ -7,6 +7,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { StatusBadge } from "@/components/produtos/status-badge";
 import { PublishButton } from "@/components/produtos/publish-button";
 import { ApproveButton } from "@/components/produtos/approve-button";
+import { PublishChannelsButton } from "@/components/produtos/publish-channels-button";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/types/product";
 
@@ -52,6 +53,7 @@ export default async function ProdutoDetalhePage({ params }: { params: { id: str
             </Button>
             {product.status === "em_revisao" && <ApproveButton productId={product.id} />}
             {canPublish && <PublishButton productId={product.id} />}
+            {product.status === "active" && <PublishChannelsButton productId={product.id} />}
           </div>
         </div>
 

@@ -11,6 +11,13 @@ function parseRange(from?: string, to?: string) {
   return { fromDate, toDate };
 }
 
+/** CSV com BOM UTF-8 — abre corretamente no Excel com acentos. */
+function csvResponse(res: Response, csv: string, filename: string) {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send('\uFEFF' + csv);
+}
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'equipe')
 @Controller('reports')
@@ -23,12 +30,33 @@ export class ReportsController {
     return this.service.salesReport(fromDate, toDate);
   }
 
+  @Get('affiliates')
+  affiliates(@Query('from') from?: string, @Query('to') to?: string) {
+    const { fromDate, toDate } = parseRange(from, to);
+    return this.service.affiliateReport(fromDate, toDate);
+  }
+
+  @Get('financial')
+  financial(@Query('from') from?: string, @Query('to') to?: string) {
+    const { fromDate, toDate } = parseRange(from, to);
+    return this.service.financialReport(fromDate, toDate);
+  }
+
   @Get('sales/export')
   async exportSales(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res() res: Response) {
     const { fromDate, toDate } = parseRange(from, to);
-    const csv = await this.service.salesReportCsv(fromDate, toDate);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="relatorio-vendas.csv"');
-    res.send(csv);
+    csvResponse(res, await this.service.salesReportCsv(fromDate, toDate), 'relatorio-vendas.csv');
+  }
+
+  @Get('affiliates/export')
+  async exportAffiliates(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res() res: Response) {
+    const { fromDate, toDate } = parseRange(from, to);
+    csvResponse(res, await this.service.affiliateReportCsv(fromDate, toDate), 'relatorio-afiliadas.csv');
+  }
+
+  @Get('financial/export')
+  async exportFinancial(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res() res: Response) {
+    const { fromDate, toDate } = parseRange(from, to);
+    csvResponse(res, await this.service.financialReportCsv(fromDate, toDate), 'relatorio-financeiro.csv');
   }
 }

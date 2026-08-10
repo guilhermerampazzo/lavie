@@ -16,9 +16,19 @@ export class ConversationsController {
     return this.service.list(status);
   }
 
+  @Get('team')
+  teamMembers() {
+    return this.service.teamMembers();
+  }
+
   @Get(':id')
   get(@Param('id') id: string) {
     return this.service.get(id);
+  }
+
+  @Post(':id/suggest-products')
+  suggestProducts(@Param('id') id: string) {
+    return this.service.suggestProducts(id);
   }
 
   @Put(':id')

@@ -15,8 +15,32 @@ export interface ConversationListItem {
   messages: ConversationMessage[];
 }
 
+export interface ConversationCustomer {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  segments: string[];
+  whatsappVip?: boolean;
+  totalSpent: number;
+  lastOrderAt?: string | null;
+  loyaltyPoints: number;
+}
+
 export interface ConversationDetail extends Omit<ConversationListItem, "messages"> {
   messages: ConversationMessage[];
+  customer?: ConversationCustomer | null;
+}
+
+export interface ProductSuggestion {
+  product: { id: string; nome: string; preco: number; estoque: number };
+  motivo: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
 }
 
 export interface MessageTemplateItem {

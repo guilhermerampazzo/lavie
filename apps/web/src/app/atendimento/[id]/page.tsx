@@ -4,16 +4,21 @@ import { apiServerFetch, ApiError } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { ConversationList } from "@/components/atendimento/conversation-list";
 import { MessageThread } from "@/components/atendimento/message-thread";
-import type { ConversationListItem, ConversationDetail } from "@/types/atendimento";
+import type {
+  ConversationListItem,
+  ConversationDetail,
+  TeamMember,
+} from "@/types/atendimento";
 
 export default async function ConversationPage({ params }: { params: { id: string } }) {
   const session = await auth();
-  const [conversations, conversation] = await Promise.all([
+  const [conversations, conversation, team] = await Promise.all([
     apiServerFetch<ConversationListItem[]>("/conversations").catch(() => [] as ConversationListItem[]),
     apiServerFetch<ConversationDetail>(`/conversations/${params.id}`).catch((err) => {
       if (err instanceof ApiError && err.status === 404) notFound();
       throw err;
     }),
+    apiServerFetch<TeamMember[]>("/conversations/team").catch(() => [] as TeamMember[]),
   ]);
 
   return (
@@ -26,7 +31,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
           <ConversationList conversations={conversations} activeId={conversation.id} />
         </div>
         <div className="flex-1">
-          <MessageThread conversation={conversation} />
+          <MessageThread conversation={conversation} team={team} />
         </div>
       </div>
     </AppShell>

@@ -30,6 +30,8 @@ import { FinanceModule } from './finance/finance.module';
 import { StockModule } from './stock/stock.module';
 import { ReturnsModule } from './returns/returns.module';
 import { KitsModule } from './kits/kits.module';
+import { ChannelsModule } from './channels/channels.module';
+import { ReportsAutomationModule } from './reports-automation/reports-automation.module';
 
 @Module({
   imports: [
@@ -70,6 +72,8 @@ import { KitsModule } from './kits/kits.module';
     StockModule,
     ReturnsModule,
     KitsModule,
+    ChannelsModule,
+    ReportsAutomationModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

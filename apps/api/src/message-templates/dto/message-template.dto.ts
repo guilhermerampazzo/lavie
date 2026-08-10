@@ -7,7 +7,12 @@ export const createMessageTemplateSchema = z.object({
   active: z.boolean().optional().default(true),
 });
 
-export const updateMessageTemplateSchema = createMessageTemplateSchema.partial();
+export const updateMessageTemplateSchema =
+  createMessageTemplateSchema.partial();
 
-export type CreateMessageTemplateDto = z.infer<typeof createMessageTemplateSchema>;
-export type UpdateMessageTemplateDto = z.infer<typeof updateMessageTemplateSchema>;
+export type CreateMessageTemplateDto = z.infer<
+  typeof createMessageTemplateSchema
+>;
+export type UpdateMessageTemplateDto = z.infer<
+  typeof updateMessageTemplateSchema
+>;

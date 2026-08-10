@@ -26,7 +26,8 @@ export class EvolutionService {
     // "change-me" e o placeholder do .env.example — nao conta como configurado.
     this.configured = Boolean(apiKey) && apiKey !== 'change-me';
     this.instanceName = config.get<string>('EVOLUTION_INSTANCE') ?? 'crm';
-    this.publicUrl = config.get<string>('PUBLIC_URL') ?? 'http://localhost:10215';
+    this.publicUrl =
+      config.get<string>('PUBLIC_URL') ?? 'http://localhost:10215';
 
     this.client = new EvolutionClient({
       url: config.get<string>('EVOLUTION_URL') ?? 'http://evolution:8080',
@@ -43,7 +44,10 @@ export class EvolutionService {
   /** Estado real da instância (connectionState) + lista de instâncias. */
   async status() {
     if (!this.configured) {
-      return { configured: false, message: 'EVOLUTION_API_KEY não configurada no .env.' };
+      return {
+        configured: false,
+        message: 'EVOLUTION_API_KEY não configurada no .env.',
+      };
     }
     try {
       const instances = (await this.client.instances.fetchAll()) as Array<{
@@ -63,7 +67,11 @@ export class EvolutionService {
             profileName: mine.profileName,
           }
         : null;
-      return { configured: true, connection, instances: Array.isArray(instances) ? instances.length : 0 };
+      return {
+        configured: true,
+        connection,
+        instances: Array.isArray(instances) ? instances.length : 0,
+      };
     } catch (err) {
       return { configured: true, error: (err as Error).message.slice(0, 300) };
     }
@@ -71,10 +79,14 @@ export class EvolutionService {
 
   /** Registra o webhook de mensagens do Evolution apontando para o painel. */
   async ensureWebhook() {
-    if (!this.configured) return { ok: false, message: 'Evolution não configurado.' };
+    if (!this.configured)
+      return { ok: false, message: 'Evolution não configurado.' };
     const webhookUrl = `${this.publicUrl}/api/webhooks/evolution`;
     const data = {
-      webhook: { url: webhookUrl, events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE'] },
+      webhook: {
+        url: webhookUrl,
+        events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE'],
+      },
     };
     await this.client.instances.setWebhook(this.instanceName, data);
     this.logger.log(`Webhook Evolution registrado: ${webhookUrl}`);
@@ -94,7 +106,14 @@ export class EvolutionService {
       remoteJid?: string;
       name?: string;
       pushName?: string;
-      messages?: Array<{ message?: { conversation?: string; extendedTextMessage?: { text?: string } }; key?: { id?: string; fromMe?: boolean }; pushName?: string }>;
+      messages?: Array<{
+        message?: {
+          conversation?: string;
+          extendedTextMessage?: { text?: string };
+        };
+        key?: { id?: string; fromMe?: boolean };
+        pushName?: string;
+      }>;
     }>;
 
     let created = 0;
@@ -130,14 +149,20 @@ export class EvolutionService {
         }
       }
     }
-    this.logger.log(`Evolution pull: ${created} mensagens novas em ${chatList.length} chats`);
+    this.logger.log(
+      `Evolution pull: ${created} mensagens novas em ${chatList.length} chats`,
+    );
     return { chats: chatList.length, messagesCreated: created };
   }
 
   /** Liga a instância (conexão WhatsApp). Se o QR for necessário, retorna a URL. */
   async connect() {
-    if (!this.configured) return { ok: false, message: 'Evolution não configurado.' };
+    if (!this.configured)
+      return { ok: false, message: 'Evolution não configurado.' };
     await this.client.instances.connect(this.instanceName);
-    return { ok: true, message: `Instância "${this.instanceName}" conectando — escaneie o QR no Evolution (evo.usejoiaslavie.com.br).` };
+    return {
+      ok: true,
+      message: `Instância "${this.instanceName}" conectando — escaneie o QR no Evolution (evo.usejoiaslavie.com.br).`,
+    };
   }
 }

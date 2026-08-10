@@ -7,8 +7,13 @@ export class ReportsService {
 
   async salesReport(from: Date, to: Date) {
     const orders = await this.prisma.client.order.findMany({
-      where: { createdAt: { gte: from, lte: to }, status: { not: 'cancelado' } },
-      include: { items: { include: { product: { include: { category: true } } } } },
+      where: {
+        createdAt: { gte: from, lte: to },
+        status: { not: 'cancelado' },
+      },
+      include: {
+        items: { include: { product: { include: { category: true } } } },
+      },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -17,7 +22,10 @@ export class ReportsService {
     const byDay = new Map<string, number>();
 
     for (const o of orders) {
-      byChannel.set(o.channel, (byChannel.get(o.channel) ?? 0) + Number(o.total));
+      byChannel.set(
+        o.channel,
+        (byChannel.get(o.channel) ?? 0) + Number(o.total),
+      );
       const day = o.createdAt.toISOString().slice(0, 10);
       byDay.set(day, (byDay.get(day) ?? 0) + Number(o.total));
 
@@ -25,7 +33,8 @@ export class ReportsService {
         const categoryName = item.product?.category?.name ?? 'Sem categoria';
         byCategory.set(
           categoryName,
-          (byCategory.get(categoryName) ?? 0) + Number(item.unitPrice) * item.quantity,
+          (byCategory.get(categoryName) ?? 0) +
+            Number(item.unitPrice) * item.quantity,
         );
       }
     }
@@ -33,9 +42,18 @@ export class ReportsService {
     return {
       totalOrders: orders.length,
       totalRevenue: orders.reduce((sum, o) => sum + Number(o.total), 0),
-      byChannel: Array.from(byChannel.entries()).map(([channel, total]) => ({ channel, total })),
-      byCategory: Array.from(byCategory.entries()).map(([category, total]) => ({ category, total })),
-      byDay: Array.from(byDay.entries()).map(([day, total]) => ({ day, total })),
+      byChannel: Array.from(byChannel.entries()).map(([channel, total]) => ({
+        channel,
+        total,
+      })),
+      byCategory: Array.from(byCategory.entries()).map(([category, total]) => ({
+        category,
+        total,
+      })),
+      byDay: Array.from(byDay.entries()).map(([day, total]) => ({
+        day,
+        total,
+      })),
     };
   }
 
@@ -43,13 +61,19 @@ export class ReportsService {
    * Comparativo entre dois períodos (escopofinal.md 10.1 — comparação de
    * períodos): vendas, ticket médio e variação % entre os dois intervalos.
    */
-  async comparePeriods(from: Date, to: Date, compareFrom: Date, compareTo: Date) {
+  async comparePeriods(
+    from: Date,
+    to: Date,
+    compareFrom: Date,
+    compareTo: Date,
+  ) {
     const [current, previous] = await Promise.all([
       this.salesReport(from, to),
       this.salesReport(compareFrom, compareTo),
     ]);
 
-    const pct = (cur: number, prev: number) => (prev === 0 ? (cur > 0 ? null : 0) : ((cur - prev) / prev) * 100);
+    const pct = (cur: number, prev: number) =>
+      prev === 0 ? (cur > 0 ? null : 0) : ((cur - prev) / prev) * 100;
 
     return {
       current: {
@@ -57,7 +81,10 @@ export class ReportsService {
         to: to.toISOString(),
         totalOrders: current.totalOrders,
         totalRevenue: current.totalRevenue,
-        avgTicket: current.totalOrders > 0 ? current.totalRevenue / current.totalOrders : 0,
+        avgTicket:
+          current.totalOrders > 0
+            ? current.totalRevenue / current.totalOrders
+            : 0,
         byChannel: current.byChannel,
         byDay: current.byDay,
       },
@@ -66,15 +93,22 @@ export class ReportsService {
         to: compareTo.toISOString(),
         totalOrders: previous.totalOrders,
         totalRevenue: previous.totalRevenue,
-        avgTicket: previous.totalOrders > 0 ? previous.totalRevenue / previous.totalOrders : 0,
+        avgTicket:
+          previous.totalOrders > 0
+            ? previous.totalRevenue / previous.totalOrders
+            : 0,
         byChannel: previous.byChannel,
       },
       changes: {
         revenueChange: pct(current.totalRevenue, previous.totalRevenue),
         ordersChange: pct(current.totalOrders, previous.totalOrders),
         avgTicketChange: pct(
-          current.totalOrders > 0 ? current.totalRevenue / current.totalOrders : 0,
-          previous.totalOrders > 0 ? previous.totalRevenue / previous.totalOrders : 0,
+          current.totalOrders > 0
+            ? current.totalRevenue / current.totalOrders
+            : 0,
+          previous.totalOrders > 0
+            ? previous.totalRevenue / previous.totalOrders
+            : 0,
         ),
       },
     };
@@ -97,9 +131,18 @@ export class ReportsService {
         if (!c.order) return false;
         return c.order.createdAt >= from && c.order.createdAt <= to;
       });
-      const conversions = a.trackingLinks.reduce((s, l) => s + l.conversions, 0);
-      const revenue = periodCommissions.reduce((s, c) => s + Number(c.order?.total ?? 0), 0);
-      const commissionTotal = periodCommissions.reduce((s, c) => s + Number(c.amount), 0);
+      const conversions = a.trackingLinks.reduce(
+        (s, l) => s + l.conversions,
+        0,
+      );
+      const revenue = periodCommissions.reduce(
+        (s, c) => s + Number(c.order?.total ?? 0),
+        0,
+      );
+      const commissionTotal = periodCommissions.reduce(
+        (s, c) => s + Number(c.amount),
+        0,
+      );
       const commissionPending = periodCommissions
         .filter((c) => c.status === 'pendente' || c.status === 'aprovado')
         .reduce((s, c) => s + Number(c.amount), 0);
@@ -130,7 +173,10 @@ export class ReportsService {
   async financialReport(from: Date, to: Date) {
     const [orders, accounts, commissions] = await Promise.all([
       this.prisma.client.order.findMany({
-        where: { createdAt: { gte: from, lte: to }, status: { not: 'cancelado' } },
+        where: {
+          createdAt: { gte: from, lte: to },
+          status: { not: 'cancelado' },
+        },
         include: { items: { include: { product: true } } },
       }),
       this.prisma.client.account.findMany({
@@ -144,7 +190,9 @@ export class ReportsService {
       return (
         s +
         o.items.reduce((si, item) => {
-          const custo = item.product?.precoCusto ? Number(item.product.precoCusto) : 0;
+          const custo = item.product?.precoCusto
+            ? Number(item.product.precoCusto)
+            : 0;
           return si + custo * item.quantity;
         }, 0)
       );
@@ -163,7 +211,10 @@ export class ReportsService {
     const netProfit = grossProfit - periodCommissions - expenses;
 
     // Margem por produto
-    const productMap = new Map<string, { nome: string; revenue: number; custo: number; qty: number }>();
+    const productMap = new Map<
+      string,
+      { nome: string; revenue: number; custo: number; qty: number }
+    >();
     for (const o of orders) {
       for (const item of o.items) {
         if (!item.product) continue;
@@ -175,7 +226,9 @@ export class ReportsService {
           qty: 0,
         };
         entry.revenue += Number(item.unitPrice) * item.quantity;
-        entry.custo += (item.product.precoCusto ? Number(item.product.precoCusto) : 0) * item.quantity;
+        entry.custo +=
+          (item.product.precoCusto ? Number(item.product.precoCusto) : 0) *
+          item.quantity;
         entry.qty += item.quantity;
         productMap.set(key, entry);
       }
@@ -205,13 +258,24 @@ export class ReportsService {
 
   async salesReportCsv(from: Date, to: Date): Promise<string> {
     const orders = await this.prisma.client.order.findMany({
-      where: { createdAt: { gte: from, lte: to }, status: { not: 'cancelado' } },
+      where: {
+        createdAt: { gte: from, lte: to },
+        status: { not: 'cancelado' },
+      },
       orderBy: { createdAt: 'asc' },
     });
 
     const header = 'pedido,data,canal,status,total\n';
     const rows = orders
-      .map((o) => [o.id, o.createdAt.toISOString(), o.channel, o.status, o.total.toString()].join(','))
+      .map((o) =>
+        [
+          o.id,
+          o.createdAt.toISOString(),
+          o.channel,
+          o.status,
+          o.total.toString(),
+        ].join(','),
+      )
       .join('\n');
     return header + rows;
   }
@@ -219,10 +283,19 @@ export class ReportsService {
   /** CSV de afiliadas (abre no Excel com BOM). */
   async affiliateReportCsv(from: Date, to: Date): Promise<string> {
     const report = await this.affiliateReport(from, to);
-    const header = 'afiliada,canal,conversoes,receita,comissao_total,comissao_pendente,roi\n';
+    const header =
+      'afiliada,canal,conversoes,receita,comissao_total,comissao_pendente,roi\n';
     const rows = report.rows
       .map((r) =>
-        [r.name, r.channel ?? '', r.conversions, r.revenue.toFixed(2), r.commissionTotal.toFixed(2), r.commissionPending.toFixed(2), r.roi?.toFixed(2) ?? ''].join(','),
+        [
+          r.name,
+          r.channel ?? '',
+          r.conversions,
+          r.revenue.toFixed(2),
+          r.commissionTotal.toFixed(2),
+          r.commissionPending.toFixed(2),
+          r.roi?.toFixed(2) ?? '',
+        ].join(','),
       )
       .join('\n');
     return header + rows;
@@ -245,7 +318,8 @@ export class ReportsService {
       'Margem por produto',
       'produto,receita,custo,margem_%',
       ...report.marginByProduct.map(
-        (p) => `${p.nome},${p.revenue.toFixed(2)},${p.custo.toFixed(2)},${p.margin.toFixed(1)}`,
+        (p) =>
+          `${p.nome},${p.revenue.toFixed(2)},${p.custo.toFixed(2)},${p.margin.toFixed(1)}`,
       ),
     ];
     return lines.join('\n');

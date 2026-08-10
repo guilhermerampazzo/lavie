@@ -32,7 +32,10 @@ interface BlingConta {
 export class BlingSyncService {
   private readonly logger = new Logger(BlingSyncService.name);
   /** Cache da validação (60s) — evita bater na API do Bling a cada request. */
-  private validationCache: { at: number; result: { connected: boolean; error?: string | null } } | null = null;
+  private validationCache: {
+    at: number;
+    result: { connected: boolean; error?: string | null };
+  } | null = null;
 
   constructor(
     private readonly bling: BlingService,
@@ -50,7 +53,10 @@ export class BlingSyncService {
     }
     let result: { connected: boolean; error?: string | null };
     if (!(await this.bling.isConnected())) {
-      result = { connected: false, error: 'Sem token salvo (OAuth não concluído).' };
+      result = {
+        connected: false,
+        error: 'Sem token salvo (OAuth não concluído).',
+      };
     } else {
       try {
         const client = await this.bling.getClient();
@@ -64,10 +70,16 @@ export class BlingSyncService {
               'Token do Bling expirado ou inválido — clique em "Conectar ao Bling" em /configuracoes para reconectar (a renovação automática não conseguiu atualizar).',
           };
         } else {
-          result = { connected: false, error: check.error ?? 'Falha ao validar conexão com o Bling.' };
+          result = {
+            connected: false,
+            error: check.error ?? 'Falha ao validar conexão com o Bling.',
+          };
         }
       } catch (err) {
-        result = { connected: false, error: (err as Error).message.slice(0, 300) };
+        result = {
+          connected: false,
+          error: (err as Error).message.slice(0, 300),
+        };
       }
     }
     this.validationCache = { at: Date.now(), result };
@@ -77,7 +89,10 @@ export class BlingSyncService {
   /** Puxa notas fiscais (NF-e emitidas) do Bling para a tabela Invoice. */
   async syncInvoices() {
     const client = await this.bling.getClient();
-    const notas = (await client.invoices.list({ pagina: 1, limite: 50 })) as BlingNota[];
+    const notas = (await client.invoices.list({
+      pagina: 1,
+      limite: 50,
+    })) as BlingNota[];
 
     let created = 0;
     for (const nota of notas) {
@@ -87,7 +102,9 @@ export class BlingSyncService {
       const numero = String(nota.numero ?? '');
       const total = Number(nota.totalNota ?? nota.total ?? 0);
       const status = mapNotaStatus(nota.status);
-      const issuedAt = nota.dataEmissao ? new Date(String(nota.dataEmissao).slice(0, 10)) : undefined;
+      const issuedAt = nota.dataEmissao
+        ? new Date(String(nota.dataEmissao).slice(0, 10))
+        : undefined;
 
       const existing = await this.prisma.client.invoice.findFirst({
         where: { blingInvoiceId: blingId },
@@ -102,7 +119,10 @@ export class BlingSyncService {
       };
 
       if (existing) {
-        await this.prisma.client.invoice.update({ where: { id: existing.id }, data });
+        await this.prisma.client.invoice.update({
+          where: { id: existing.id },
+          data,
+        });
       } else {
         await this.prisma.client.invoice.create({
           data: { ...data, orderId: null } as never,
@@ -110,14 +130,19 @@ export class BlingSyncService {
         created++;
       }
     }
-    this.logger.log(`Bling sync: ${notas.length} notas fiscais, ${created} novas`);
+    this.logger.log(
+      `Bling sync: ${notas.length} notas fiscais, ${created} novas`,
+    );
     return { total: notas.length, created };
   }
 
   /** Puxa contas a receber para a tabela Account (type receivable). */
   async syncReceivables() {
     const client = await this.bling.getClient();
-    const contas = (await client.receivables.list({ pagina: 1, limite: 100 })) as BlingConta[];
+    const contas = (await client.receivables.list({
+      pagina: 1,
+      limite: 100,
+    })) as BlingConta[];
 
     let created = 0;
     for (const conta of contas) {
@@ -125,9 +150,17 @@ export class BlingSyncService {
       if (!blingId) continue;
 
       const amount = Number(conta.valor ?? conta.valorOriginal ?? 0);
-      const dueDate = conta.dataVencimento ? new Date(String(conta.dataVencimento).slice(0, 10)) : new Date();
-      const paidAt = conta.dataPagamento ? new Date(String(conta.dataPagamento).slice(0, 10)) : undefined;
-      const status = paidAt ? 'paga' : new Date() > dueDate ? 'atrasada' : 'aberta';
+      const dueDate = conta.dataVencimento
+        ? new Date(String(conta.dataVencimento).slice(0, 10))
+        : new Date();
+      const paidAt = conta.dataPagamento
+        ? new Date(String(conta.dataPagamento).slice(0, 10))
+        : undefined;
+      const status = paidAt
+        ? 'paga'
+        : new Date() > dueDate
+          ? 'atrasada'
+          : 'aberta';
 
       const existing = await this.prisma.client.account.findFirst({
         where: { description: { contains: `Bling#${blingId}` } },
@@ -152,14 +185,19 @@ export class BlingSyncService {
         created++;
       }
     }
-    this.logger.log(`Bling sync: ${contas.length} contas a receber, ${created} novas`);
+    this.logger.log(
+      `Bling sync: ${contas.length} contas a receber, ${created} novas`,
+    );
     return { total: contas.length, created };
   }
 
   /** Puxa contas a pagar para a tabela Account (type payable). */
   async syncPayables() {
     const client = await this.bling.getClient();
-    const contas = (await client.payables.list({ pagina: 1, limite: 100 })) as BlingConta[];
+    const contas = (await client.payables.list({
+      pagina: 1,
+      limite: 100,
+    })) as BlingConta[];
 
     let created = 0;
     for (const conta of contas) {
@@ -167,9 +205,17 @@ export class BlingSyncService {
       if (!blingId) continue;
 
       const amount = Number(conta.valor ?? conta.valorOriginal ?? 0);
-      const dueDate = conta.dataVencimento ? new Date(String(conta.dataVencimento).slice(0, 10)) : new Date();
-      const paidAt = conta.dataPagamento ? new Date(String(conta.dataPagamento).slice(0, 10)) : undefined;
-      const status = paidAt ? 'paga' : new Date() > dueDate ? 'atrasada' : 'aberta';
+      const dueDate = conta.dataVencimento
+        ? new Date(String(conta.dataVencimento).slice(0, 10))
+        : new Date();
+      const paidAt = conta.dataPagamento
+        ? new Date(String(conta.dataPagamento).slice(0, 10))
+        : undefined;
+      const status = paidAt
+        ? 'paga'
+        : new Date() > dueDate
+          ? 'atrasada'
+          : 'aberta';
 
       const existing = await this.prisma.client.account.findFirst({
         where: { description: { contains: `Bling#${blingId}` } },
@@ -194,14 +240,19 @@ export class BlingSyncService {
         created++;
       }
     }
-    this.logger.log(`Bling sync: ${contas.length} contas a pagar, ${created} novas`);
+    this.logger.log(
+      `Bling sync: ${contas.length} contas a pagar, ${created} novas`,
+    );
     return { total: contas.length, created };
   }
 
   /** Sincroniza tudo que o Bling expõe. */
   async syncAll() {
     if (!(await this.isConnected())) {
-      return { error: 'Bling não conectado. Clique em "Conectar ao Bling" em /configuracoes.' };
+      return {
+        error:
+          'Bling não conectado. Clique em "Conectar ao Bling" em /configuracoes.',
+      };
     }
     const [invoices, receivables, payables] = await Promise.all([
       this.syncInvoices(),
@@ -214,15 +265,26 @@ export class BlingSyncService {
   /** Dados consolidados para a tela do painel. */
   async dashboard() {
     const [invoices, receivables, payables] = await Promise.all([
-      this.prisma.client.invoice.findMany({ orderBy: { issueDate: 'desc' }, take: 20 }),
-      this.prisma.client.account.findMany({ where: { type: 'receivable' }, orderBy: { dueDate: 'asc' } }),
-      this.prisma.client.account.findMany({ where: { type: 'payable' }, orderBy: { dueDate: 'asc' } }),
+      this.prisma.client.invoice.findMany({
+        orderBy: { issueDate: 'desc' },
+        take: 20,
+      }),
+      this.prisma.client.account.findMany({
+        where: { type: 'receivable' },
+        orderBy: { dueDate: 'asc' },
+      }),
+      this.prisma.client.account.findMany({
+        where: { type: 'payable' },
+        orderBy: { dueDate: 'asc' },
+      }),
     ]);
 
     const receivablesOpen = receivables
       .filter((a) => a.status !== 'paga')
       .reduce((s, a) => s + Number(a.amount), 0);
-    const payablesOpen = payables.filter((a) => a.status !== 'paga').reduce((s, a) => s + Number(a.amount), 0);
+    const payablesOpen = payables
+      .filter((a) => a.status !== 'paga')
+      .reduce((s, a) => s + Number(a.amount), 0);
 
     return {
       connection: await this.validateConnection(),
@@ -232,7 +294,10 @@ export class BlingSyncService {
         drafts: invoices.filter((i) => i.status === 'rascunho').length,
         items: invoices,
       },
-      receivables: { totalOpen: receivablesOpen, items: receivables.slice(0, 20) },
+      receivables: {
+        totalOpen: receivablesOpen,
+        items: receivables.slice(0, 20),
+      },
       payables: { totalOpen: payablesOpen, items: payables.slice(0, 20) },
       summary: {
         aReceber: receivablesOpen,

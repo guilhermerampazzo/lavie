@@ -8,11 +8,25 @@ import { ChannelKey } from '../channels/channels.service';
  * a API devolve apenas flags "hasCredentials" e máscaras.
  */
 export type ChannelCredentials = {
-  correios?: { user?: string; password?: string; codigoAdministrativo?: string; contrato?: string; cepOrigem?: string };
+  correios?: {
+    user?: string;
+    password?: string;
+    codigoAdministrativo?: string;
+    contrato?: string;
+    cepOrigem?: string;
+  };
   melhor_envio?: { token?: string; cepOrigem?: string };
-  instagram?: { clientId?: string; clientSecret?: string; accessToken?: string };
+  instagram?: {
+    clientId?: string;
+    clientSecret?: string;
+    accessToken?: string;
+  };
   tiktok?: { clientId?: string; clientSecret?: string; accessToken?: string };
-  mercado_livre?: { clientId?: string; clientSecret?: string; refreshToken?: string };
+  mercado_livre?: {
+    clientId?: string;
+    clientSecret?: string;
+    refreshToken?: string;
+  };
   shopee?: { partnerId?: string; partnerKey?: string; shopId?: string };
   amazon?: { sellerId?: string; authToken?: string; refreshToken?: string };
   shein?: { clientId?: string; clientSecret?: string };
@@ -20,7 +34,13 @@ export type ChannelCredentials = {
 
 const SETTING_KEY = 'channel_credentials';
 
-const CHANNEL_META: Record<string, { label: string; fields: Array<{ key: string; label: string; secret?: boolean }> }> = {
+const CHANNEL_META: Record<
+  string,
+  {
+    label: string;
+    fields: Array<{ key: string; label: string; secret?: boolean }>;
+  }
+> = {
   correios: {
     label: 'Correios (frete)',
     fields: [
@@ -92,7 +112,9 @@ export class CredentialsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getRaw(): Promise<ChannelCredentials> {
-    const setting = await this.prisma.client.setting.findUnique({ where: { key: SETTING_KEY } });
+    const setting = await this.prisma.client.setting.findUnique({
+      where: { key: SETTING_KEY },
+    });
     return (setting?.value as ChannelCredentials) ?? {};
   }
 
@@ -101,7 +123,8 @@ export class CredentialsService {
     const raw = await this.getRaw();
     const result: Record<string, unknown> = {};
     for (const [channel, meta] of Object.entries(CHANNEL_META)) {
-      const creds = (raw as Record<string, Record<string, string>>)[channel] ?? {};
+      const creds =
+        (raw as Record<string, Record<string, string>>)[channel] ?? {};
       const filled = meta.fields.filter((f) => creds[f.key]?.trim());
       result[channel] = {
         label: meta.label,
@@ -118,7 +141,10 @@ export class CredentialsService {
     return result;
   }
 
-  async save(channel: ChannelKey | 'correios' | 'melhor_envio', payload: Record<string, string>) {
+  async save(
+    channel: ChannelKey | 'correios' | 'melhor_envio',
+    payload: Record<string, string>,
+  ) {
     const raw = await this.getRaw();
     const meta = CHANNEL_META[channel];
     if (!meta) throw new Error(`Canal de credenciais inválido: ${channel}`);
@@ -126,10 +152,17 @@ export class CredentialsService {
     const clean: Record<string, string> = {};
     for (const f of meta.fields) {
       const value = payload[f.key];
-      if (typeof value === 'string' && value.trim()) clean[f.key] = value.trim();
+      if (typeof value === 'string' && value.trim())
+        clean[f.key] = value.trim();
     }
 
-    const next = { ...raw, [channel]: { ...((raw as Record<string, unknown>)[channel] as object | undefined), ...clean } };
+    const next = {
+      ...raw,
+      [channel]: {
+        ...((raw as Record<string, unknown>)[channel] as object | undefined),
+        ...clean,
+      },
+    };
     await this.prisma.client.setting.upsert({
       where: { key: SETTING_KEY },
       update: { value: next as never },

@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -40,23 +45,36 @@ export class ResellersService {
 
   async approve(id: string) {
     await this.get(id);
-    return this.prisma.client.reseller.update({ where: { id }, data: { status: 'aprovada' } });
+    return this.prisma.client.reseller.update({
+      where: { id },
+      data: { status: 'aprovada' },
+    });
   }
 
   async block(id: string) {
     await this.get(id);
-    return this.prisma.client.reseller.update({ where: { id }, data: { status: 'bloqueada' } });
+    return this.prisma.client.reseller.update({
+      where: { id },
+      data: { status: 'bloqueada' },
+    });
   }
 
   async invite(id: string, email: string) {
-    const reseller = await this.prisma.client.reseller.findUnique({ where: { id } });
+    const reseller = await this.prisma.client.reseller.findUnique({
+      where: { id },
+    });
     if (!reseller) throw new NotFoundException('Revendedora não encontrada');
     if (reseller.status !== 'aprovada') {
-      throw new BadRequestException('Só é possível liberar acesso para revendedoras aprovadas.');
+      throw new BadRequestException(
+        'Só é possível liberar acesso para revendedoras aprovadas.',
+      );
     }
 
-    const existing = await this.prisma.client.user.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('Já existe um usuário com esse e-mail.');
+    const existing = await this.prisma.client.user.findUnique({
+      where: { email },
+    });
+    if (existing)
+      throw new ConflictException('Já existe um usuário com esse e-mail.');
 
     const tempPassword = randomBytes(6).toString('hex');
     const passwordHash = await bcrypt.hash(tempPassword, 10);
@@ -71,6 +89,9 @@ export class ResellersService {
       },
     });
 
-    return { user: { id: user.id, name: user.name, email: user.email }, tempPassword };
+    return {
+      user: { id: user.id, name: user.name, email: user.email },
+      tempPassword,
+    };
   }
 }

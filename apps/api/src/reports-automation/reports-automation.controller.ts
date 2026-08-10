@@ -27,6 +27,10 @@ export class ReportsAutomationController {
 
   @Post('enqueue')
   enqueue() {
-    return this.queue.add('weekly-snapshot', {}, { removeOnComplete: 10, removeOnFail: 10 });
+    return this.queue.add(
+      'weekly-snapshot',
+      {},
+      { removeOnComplete: 10, removeOnFail: 10 },
+    );
   }
 }

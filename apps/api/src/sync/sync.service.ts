@@ -62,7 +62,11 @@ export class SyncService {
       } catch (err) {
         // Loja sem nenhum registro dessa entidade: a API retorna 404
         // "Last page is 0" em vez de uma lista vazia com 200.
-        if (page === 1 && err instanceof Error && /Last page is 0/i.test(err.message)) {
+        if (
+          page === 1 &&
+          err instanceof Error &&
+          /Last page is 0/i.test(err.message)
+        ) {
           break;
         }
         throw err;
@@ -75,7 +79,8 @@ export class SyncService {
   }
 
   async syncCategories(): Promise<number> {
-    const categories = (await this.nuvemshop.client.categories.list()) as NuvemshopEntity[];
+    const categories =
+      (await this.nuvemshop.client.categories.list()) as NuvemshopEntity[];
     let count = 0;
     for (const c of categories) {
       const name = firstLang(c.name) || `Categoria ${c.id}`;
@@ -92,21 +97,30 @@ export class SyncService {
   async syncProducts(): Promise<number> {
     await this.syncCategories();
 
-    const products = await this.paginate((page) =>
-      this.nuvemshop.client.products.list(`?page=${page}&per_page=200`) as Promise<NuvemshopEntity[]>,
+    const products = await this.paginate(
+      (page) =>
+        this.nuvemshop.client.products.list(
+          `?page=${page}&per_page=200`,
+        ) as Promise<NuvemshopEntity[]>,
     );
 
     let count = 0;
     for (const p of products) {
       const nome = firstLang(p.name) || `Produto ${p.id}`;
       const descricao = firstLang(p.description);
-      const variants: NuvemshopEntity[] = Array.isArray(p.variants) ? p.variants : [];
+      const variants: NuvemshopEntity[] = Array.isArray(p.variants)
+        ? p.variants
+        : [];
       const precoBase = variants[0]?.price ? Number(variants[0].price) : 0;
 
       let categoryId: string | undefined;
-      const firstCategory = Array.isArray(p.categories) ? p.categories[0] : undefined;
+      const firstCategory = Array.isArray(p.categories)
+        ? p.categories[0]
+        : undefined;
       if (firstCategory) {
-        const catNuvemshopId = String(typeof firstCategory === 'object' ? firstCategory.id : firstCategory);
+        const catNuvemshopId = String(
+          typeof firstCategory === 'object' ? firstCategory.id : firstCategory,
+        );
         const category = await this.prisma.client.category.findUnique({
           where: { nuvemshopCategoryId: catNuvemshopId },
         });
@@ -157,8 +171,11 @@ export class SyncService {
   }
 
   async syncCustomers(): Promise<number> {
-    const customers = await this.paginate((page) =>
-      this.nuvemshop.client.customers.list(`?page=${page}&per_page=200`) as Promise<NuvemshopEntity[]>,
+    const customers = await this.paginate(
+      (page) =>
+        this.nuvemshop.client.customers.list(
+          `?page=${page}&per_page=200`,
+        ) as Promise<NuvemshopEntity[]>,
     );
 
     let count = 0;
@@ -183,8 +200,11 @@ export class SyncService {
   }
 
   async syncOrders(): Promise<number> {
-    const orders = await this.paginate((page) =>
-      this.nuvemshop.client.orders.list(`?page=${page}&per_page=200`) as Promise<NuvemshopEntity[]>,
+    const orders = await this.paginate(
+      (page) =>
+        this.nuvemshop.client.orders.list(
+          `?page=${page}&per_page=200`,
+        ) as Promise<NuvemshopEntity[]>,
     );
 
     let count = 0;
@@ -193,7 +213,10 @@ export class SyncService {
       if (o.customer?.id) {
         const customer = await this.prisma.client.customer.upsert({
           where: { nuvemshopCustomerId: String(o.customer.id) },
-          update: { name: o.customer.name ?? undefined, email: o.customer.email ?? undefined },
+          update: {
+            name: o.customer.name ?? undefined,
+            email: o.customer.email ?? undefined,
+          },
           create: {
             nuvemshopCustomerId: String(o.customer.id),
             name: o.customer.name ?? `Cliente ${o.customer.id}`,
@@ -224,7 +247,8 @@ export class SyncService {
   }
 
   async syncCoupons(): Promise<number> {
-    const coupons = (await this.nuvemshop.client.coupons.list()) as NuvemshopEntity[];
+    const coupons =
+      (await this.nuvemshop.client.coupons.list()) as NuvemshopEntity[];
     let count = 0;
     for (const c of coupons) {
       await this.prisma.client.coupon.upsert({
@@ -250,7 +274,9 @@ export class SyncService {
     return count;
   }
 
-  async runEntity(entity: 'products' | 'customers' | 'orders' | 'coupons'): Promise<number> {
+  async runEntity(
+    entity: 'products' | 'customers' | 'orders' | 'coupons',
+  ): Promise<number> {
     switch (entity) {
       case 'products':
         return this.syncProducts();

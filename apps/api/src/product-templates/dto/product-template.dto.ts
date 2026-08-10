@@ -8,7 +8,12 @@ export const createProductTemplateSchema = z.object({
   isDefault: z.boolean().optional().default(false),
 });
 
-export const updateProductTemplateSchema = createProductTemplateSchema.partial();
+export const updateProductTemplateSchema =
+  createProductTemplateSchema.partial();
 
-export type CreateProductTemplateDto = z.infer<typeof createProductTemplateSchema>;
-export type UpdateProductTemplateDto = z.infer<typeof updateProductTemplateSchema>;
+export type CreateProductTemplateDto = z.infer<
+  typeof createProductTemplateSchema
+>;
+export type UpdateProductTemplateDto = z.infer<
+  typeof updateProductTemplateSchema
+>;

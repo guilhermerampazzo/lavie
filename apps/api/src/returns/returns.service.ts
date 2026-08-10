@@ -16,9 +16,17 @@ export class ReturnsService {
     });
   }
 
-  async updateStatus(id: string, status: 'solicitada' | 'aprovada' | 'recusada' | 'concluida') {
-    const existing = await this.prisma.client.returnRequest.findUnique({ where: { id } });
+  async updateStatus(
+    id: string,
+    status: 'solicitada' | 'aprovada' | 'recusada' | 'concluida',
+  ) {
+    const existing = await this.prisma.client.returnRequest.findUnique({
+      where: { id },
+    });
     if (!existing) throw new NotFoundException('Solicitação não encontrada');
-    return this.prisma.client.returnRequest.update({ where: { id }, data: { status } });
+    return this.prisma.client.returnRequest.update({
+      where: { id },
+      data: { status },
+    });
   }
 }

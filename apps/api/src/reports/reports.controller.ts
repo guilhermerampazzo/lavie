@@ -7,7 +7,9 @@ import { ReportsService } from './reports.service';
 
 function parseRange(from?: string, to?: string) {
   const toDate = to ? new Date(to) : new Date();
-  const fromDate = from ? new Date(from) : new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+  const fromDate = from
+    ? new Date(from)
+    : new Date(toDate.getFullYear(), toDate.getMonth(), 1);
   return { fromDate, toDate };
 }
 
@@ -44,7 +46,9 @@ export class ReportsController {
   ) {
     const { fromDate, toDate } = parseRange(from, to);
     const duration = toDate.getTime() - fromDate.getTime();
-    const prevTo = compareTo ? new Date(compareTo) : new Date(fromDate.getTime() - 1);
+    const prevTo = compareTo
+      ? new Date(compareTo)
+      : new Date(fromDate.getTime() - 1);
     const prevFrom = compareFrom
       ? new Date(compareFrom)
       : new Date(prevTo.getTime() - duration);
@@ -64,20 +68,44 @@ export class ReportsController {
   }
 
   @Get('sales/export')
-  async exportSales(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res() res: Response) {
+  async exportSales(
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res() res: Response,
+  ) {
     const { fromDate, toDate } = parseRange(from, to);
-    csvResponse(res, await this.service.salesReportCsv(fromDate, toDate), 'relatorio-vendas.csv');
+    csvResponse(
+      res,
+      await this.service.salesReportCsv(fromDate, toDate),
+      'relatorio-vendas.csv',
+    );
   }
 
   @Get('affiliates/export')
-  async exportAffiliates(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res() res: Response) {
+  async exportAffiliates(
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res() res: Response,
+  ) {
     const { fromDate, toDate } = parseRange(from, to);
-    csvResponse(res, await this.service.affiliateReportCsv(fromDate, toDate), 'relatorio-afiliadas.csv');
+    csvResponse(
+      res,
+      await this.service.affiliateReportCsv(fromDate, toDate),
+      'relatorio-afiliadas.csv',
+    );
   }
 
   @Get('financial/export')
-  async exportFinancial(@Query('from') from: string | undefined, @Query('to') to: string | undefined, @Res() res: Response) {
+  async exportFinancial(
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res() res: Response,
+  ) {
     const { fromDate, toDate } = parseRange(from, to);
-    csvResponse(res, await this.service.financialReportCsv(fromDate, toDate), 'relatorio-financeiro.csv');
+    csvResponse(
+      res,
+      await this.service.financialReportCsv(fromDate, toDate),
+      'relatorio-financeiro.csv',
+    );
   }
 }

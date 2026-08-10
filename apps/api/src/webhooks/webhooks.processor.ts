@@ -4,7 +4,10 @@ import { Job } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncService } from '../sync/sync.service';
 
-const NUVEMSHOP_EVENT_ENTITY: Record<string, 'products' | 'customers' | 'orders'> = {
+const NUVEMSHOP_EVENT_ENTITY: Record<
+  string,
+  'products' | 'customers' | 'orders'
+> = {
   'order/created': 'orders',
   'order/paid': 'orders',
   'order/updated': 'orders',
@@ -20,7 +23,10 @@ interface EvolutionMessagePayload {
   event?: string;
   data?: {
     key?: { remoteJid?: string; fromMe?: boolean };
-    message?: { conversation?: string; extendedTextMessage?: { text?: string } };
+    message?: {
+      conversation?: string;
+      extendedTextMessage?: { text?: string };
+    };
     pushName?: string;
   };
 }
@@ -37,10 +43,14 @@ export class WebhooksProcessor extends WorkerHost {
   }
 
   async process(job: Job<{ eventId: string }>) {
-    const event = await this.prisma.client.webhookEvent.findUnique({ where: { id: job.data.eventId } });
+    const event = await this.prisma.client.webhookEvent.findUnique({
+      where: { id: job.data.eventId },
+    });
     if (!event) return;
 
-    this.logger.log(`Processando evento ${event.source}:${event.eventType} (${event.id})`);
+    this.logger.log(
+      `Processando evento ${event.source}:${event.eventType} (${event.id})`,
+    );
 
     if (event.source === 'evolution') {
       await this.handleEvolutionEvent(event.payload as EvolutionMessagePayload);
@@ -62,10 +72,13 @@ export class WebhooksProcessor extends WorkerHost {
   }
 
   private async handleEvolutionEvent(payload: EvolutionMessagePayload) {
-    if (payload.event !== 'messages.upsert' || payload.data?.key?.fromMe) return;
+    if (payload.event !== 'messages.upsert' || payload.data?.key?.fromMe)
+      return;
 
     const remoteJid = payload.data?.key?.remoteJid;
-    const text = payload.data?.message?.conversation ?? payload.data?.message?.extendedTextMessage?.text;
+    const text =
+      payload.data?.message?.conversation ??
+      payload.data?.message?.extendedTextMessage?.text;
     if (!remoteJid || !text) return;
 
     const contact = remoteJid.split('@')[0];
@@ -85,7 +98,11 @@ export class WebhooksProcessor extends WorkerHost {
     }
 
     await this.prisma.client.message.create({
-      data: { conversationId: conversation.id, direction: 'inbound', content: text },
+      data: {
+        conversationId: conversation.id,
+        direction: 'inbound',
+        content: text,
+      },
     });
   }
 }

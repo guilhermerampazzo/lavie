@@ -14,20 +14,39 @@ export class AffiliatesService {
 
   async list() {
     const affiliates = await this.prisma.client.affiliate.findMany({
-      include: { trackingLinks: true, commissions: { include: { order: true } } },
+      include: {
+        trackingLinks: true,
+        commissions: { include: { order: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
     return affiliates
       .map((a) => {
-        const conversions = a.trackingLinks.reduce((sum, l) => sum + l.conversions, 0);
-        const revenue = a.commissions.reduce((sum, c) => sum + Number(c.order?.total ?? 0), 0);
-        const commissionTotal = a.commissions.reduce((sum, c) => sum + Number(c.amount), 0);
+        const conversions = a.trackingLinks.reduce(
+          (sum, l) => sum + l.conversions,
+          0,
+        );
+        const revenue = a.commissions.reduce(
+          (sum, c) => sum + Number(c.order?.total ?? 0),
+          0,
+        );
+        const commissionTotal = a.commissions.reduce(
+          (sum, c) => sum + Number(c.amount),
+          0,
+        );
         const commissionPending = a.commissions
           .filter((c) => c.status === 'pendente')
           .reduce((sum, c) => sum + Number(c.amount), 0);
         const roi = commissionTotal > 0 ? revenue / commissionTotal : null;
-        return { ...a, conversions, revenue, commissionTotal, commissionPending, roi };
+        return {
+          ...a,
+          conversions,
+          revenue,
+          commissionTotal,
+          commissionPending,
+          roi,
+        };
       })
       .sort((a, b) => b.revenue - a.revenue);
   }
@@ -37,7 +56,10 @@ export class AffiliatesService {
       where: { id },
       include: {
         trackingLinks: true,
-        commissions: { include: { order: true }, orderBy: { createdAt: 'desc' } },
+        commissions: {
+          include: { order: true },
+          orderBy: { createdAt: 'desc' },
+        },
         campaigns: { orderBy: { createdAt: 'desc' } },
       },
     });
@@ -56,13 +78,20 @@ export class AffiliatesService {
 
   async createTrackingLink(affiliateId: string, dto: CreateTrackingLinkDto) {
     await this.get(affiliateId);
-    return this.prisma.client.trackingLink.create({ data: { affiliateId, ...dto } });
+    return this.prisma.client.trackingLink.create({
+      data: { affiliateId, ...dto },
+    });
   }
 
   async createCommission(affiliateId: string, dto: CreateCommissionDto) {
     await this.get(affiliateId);
     return this.prisma.client.commission.create({
-      data: { affiliateId, amount: dto.amount, orderId: dto.orderId, status: dto.status ?? 'pendente' },
+      data: {
+        affiliateId,
+        amount: dto.amount,
+        orderId: dto.orderId,
+        status: dto.status ?? 'pendente',
+      },
     });
   }
 
@@ -79,14 +108,20 @@ export class AffiliatesService {
     if (affiliateId) {
       // valida que a afiliada existe
       return this.get(affiliateId).then(() =>
-        this.prisma.client.affiliateMaterial.create({ data: { ...dto, affiliateId } }),
+        this.prisma.client.affiliateMaterial.create({
+          data: { ...dto, affiliateId },
+        }),
       );
     }
-    return this.prisma.client.affiliateMaterial.create({ data: { ...dto, affiliateId: null } });
+    return this.prisma.client.affiliateMaterial.create({
+      data: { ...dto, affiliateId: null },
+    });
   }
 
   async removeMaterial(id: string) {
-    const material = await this.prisma.client.affiliateMaterial.findUnique({ where: { id } });
+    const material = await this.prisma.client.affiliateMaterial.findUnique({
+      where: { id },
+    });
     if (!material) throw new NotFoundException('Material não encontrado');
     return this.prisma.client.affiliateMaterial.delete({ where: { id } });
   }

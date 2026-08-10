@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ResellersService } from './resellers.service';
-import { createResellerSchema, updateResellerSchema, inviteResellerSchema } from './dto/reseller.dto';
+import {
+  createResellerSchema,
+  updateResellerSchema,
+  inviteResellerSchema,
+} from './dto/reseller.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'equipe')

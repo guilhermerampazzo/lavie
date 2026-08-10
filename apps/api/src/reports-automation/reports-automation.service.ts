@@ -56,7 +56,9 @@ export class ReportsAutomationService {
   }
 
   async getSnapshot() {
-    const setting = await this.prisma.client.setting.findUnique({ where: { key: 'report_snapshot' } });
+    const setting = await this.prisma.client.setting.findUnique({
+      where: { key: 'report_snapshot' },
+    });
     return setting?.value ?? null;
   }
 }

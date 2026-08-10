@@ -57,7 +57,9 @@ export class AutomationsService {
     } catch (err) {
       // unique key já existe — ignora (dedupe)
       if ((err as { code?: string }).code === 'P2002') return;
-      this.logger.warn(`Erro ao gravar log de automação ${trigger}/${targetId}: ${(err as Error).message}`);
+      this.logger.warn(
+        `Erro ao gravar log de automação ${trigger}/${targetId}: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -69,20 +71,44 @@ export class AutomationsService {
   ) {
     const template = await this.getTemplate(trigger);
     if (!template) {
-      await this.log(trigger, targetId, 'skipped_no_template', customer.id, 'template ativo não encontrado');
+      await this.log(
+        trigger,
+        targetId,
+        'skipped_no_template',
+        customer.id,
+        'template ativo não encontrado',
+      );
       return;
     }
     if (!customer.phone) {
-      await this.log(trigger, targetId, 'skipped_no_template', customer.id, 'cliente sem telefone');
+      await this.log(
+        trigger,
+        targetId,
+        'skipped_no_template',
+        customer.id,
+        'cliente sem telefone',
+      );
       return;
     }
     const number = this.normalizePhone(customer.phone);
     if (!number) {
-      await this.log(trigger, targetId, 'skipped_no_template', customer.id, `telefone inválido: ${customer.phone}`);
+      await this.log(
+        trigger,
+        targetId,
+        'skipped_no_template',
+        customer.id,
+        `telefone inválido: ${customer.phone}`,
+      );
       return;
     }
     if (!this.evolution.configured) {
-      await this.log(trigger, targetId, 'no_evolution', customer.id, 'Evolution não configurada');
+      await this.log(
+        trigger,
+        targetId,
+        'no_evolution',
+        customer.id,
+        'Evolution não configurada',
+      );
       return;
     }
 
@@ -93,15 +119,28 @@ export class AutomationsService {
     content = content.replaceAll('{{nome}}', customer.name.split(' ')[0]);
 
     try {
-      await this.evolution.client.messages.sendText(this.evolution.instanceName, {
-        number,
-        text: content,
-      });
+      await this.evolution.client.messages.sendText(
+        this.evolution.instanceName,
+        {
+          number,
+          text: content,
+        },
+      );
       await this.log(trigger, targetId, 'sent', customer.id, `→ ${number}`);
-      this.logger.log(`Automação ${trigger} enviada para ${customer.name} (${number})`);
+      this.logger.log(
+        `Automação ${trigger} enviada para ${customer.name} (${number})`,
+      );
     } catch (err) {
-      await this.log(trigger, targetId, 'failed', customer.id, (err as Error).message.slice(0, 200));
-      this.logger.warn(`Automação ${trigger} falhou para ${customer.name}: ${(err as Error).message}`);
+      await this.log(
+        trigger,
+        targetId,
+        'failed',
+        customer.id,
+        (err as Error).message.slice(0, 200),
+      );
+      this.logger.warn(
+        `Automação ${trigger} falhou para ${customer.name}: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -122,7 +161,10 @@ export class AutomationsService {
       if (!o.customer) continue;
       await this.sendToCustomer('pos-compra', o.customer, `order:${o.id}`, {
         pedido: o.id.slice(-6),
-        total: Number(o.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        total: Number(o.total).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        }),
       });
     }
     return orders.length;

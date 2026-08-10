@@ -42,8 +42,12 @@ import { CredentialsModule } from './credentials/credentials.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const url = new URL(config.get<string>('REDIS_URL') ?? 'redis://redis:6379');
-        return { connection: { host: url.hostname, port: Number(url.port || 6379) } };
+        const url = new URL(
+          config.get<string>('REDIS_URL') ?? 'redis://redis:6379',
+        );
+        return {
+          connection: { host: url.hostname, port: Number(url.port || 6379) },
+        };
       },
     }),
     PrismaModule,

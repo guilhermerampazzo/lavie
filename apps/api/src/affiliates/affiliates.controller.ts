@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -45,12 +54,18 @@ export class AffiliatesController {
 
   @Post(':id/tracking-links')
   createTrackingLink(@Param('id') id: string, @Body() body: unknown) {
-    return this.service.createTrackingLink(id, createTrackingLinkSchema.parse(body));
+    return this.service.createTrackingLink(
+      id,
+      createTrackingLinkSchema.parse(body),
+    );
   }
 
   @Post(':id/commissions')
   createCommission(@Param('id') id: string, @Body() body: unknown) {
-    return this.service.createCommission(id, createCommissionSchema.parse(body));
+    return this.service.createCommission(
+      id,
+      createCommissionSchema.parse(body),
+    );
   }
 
   // --- Material de divulgação ---
@@ -62,12 +77,17 @@ export class AffiliatesController {
 
   @Post('materials')
   createGlobalMaterial(@Body() body: unknown) {
-    return this.service.createMaterial(createAffiliateMaterialSchema.parse(body));
+    return this.service.createMaterial(
+      createAffiliateMaterialSchema.parse(body),
+    );
   }
 
   @Post(':id/materials')
   createMaterial(@Param('id') id: string, @Body() body: unknown) {
-    return this.service.createMaterial(createAffiliateMaterialSchema.parse(body), id);
+    return this.service.createMaterial(
+      createAffiliateMaterialSchema.parse(body),
+      id,
+    );
   }
 
   @Delete('materials/:materialId')

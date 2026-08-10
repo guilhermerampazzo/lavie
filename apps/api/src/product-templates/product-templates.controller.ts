@@ -1,9 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ProductTemplatesService } from './product-templates.service';
-import { createProductTemplateSchema, updateProductTemplateSchema } from './dto/product-template.dto';
+import {
+  createProductTemplateSchema,
+  updateProductTemplateSchema,
+} from './dto/product-template.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('product-templates')

@@ -5,7 +5,10 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CategoriesService } from './categories.service';
 
-const createCategorySchema = z.object({ name: z.string().min(1), parentId: z.string().optional() });
+const createCategorySchema = z.object({
+  name: z.string().min(1),
+  parentId: z.string().optional(),
+});
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'equipe')

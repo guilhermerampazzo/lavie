@@ -8,7 +8,11 @@ export class KitsService {
 
   list() {
     return this.prisma.client.resellerKit.findMany({
-      include: { items: { include: { product: { select: { id: true, nomeGerado: true } } } } },
+      include: {
+        items: {
+          include: { product: { select: { id: true, nomeGerado: true } } },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -16,7 +20,11 @@ export class KitsService {
   async get(id: string) {
     const kit = await this.prisma.client.resellerKit.findUnique({
       where: { id },
-      include: { items: { include: { product: { select: { id: true, nomeGerado: true } } } } },
+      include: {
+        items: {
+          include: { product: { select: { id: true, nomeGerado: true } } },
+        },
+      },
     });
     if (!kit) throw new NotFoundException('Kit não encontrado');
     return kit;
@@ -27,7 +35,12 @@ export class KitsService {
     return this.prisma.client.resellerKit.create({
       data: {
         ...kitData,
-        items: { create: items.map((i) => ({ productId: i.productId, quantity: i.quantity })) },
+        items: {
+          create: items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+          })),
+        },
       },
       include: { items: true },
     });

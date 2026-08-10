@@ -42,7 +42,10 @@ export class SettingsController {
         canConnect: this.bling.hasClientCredentials(),
         label: 'Bling (fiscal/financeiro)',
       },
-      evolution: { configured: this.evolution.configured, label: 'Evolution API (WhatsApp)' },
+      evolution: {
+        configured: this.evolution.configured,
+        label: 'Evolution API (WhatsApp)',
+      },
     };
   }
 
@@ -64,7 +67,9 @@ export class SettingsController {
     const { entity } = syncEntitySchema.parse(body);
     const entities = entity === 'all' ? SYNC_ENTITIES : [entity];
 
-    const jobs: Awaited<ReturnType<typeof this.prisma.client.syncJob.create>>[] = [];
+    const jobs: Awaited<
+      ReturnType<typeof this.prisma.client.syncJob.create>
+    >[] = [];
     for (const e of entities) {
       const syncJob = await this.prisma.client.syncJob.create({
         data: { type: `nuvemshop:${e}`, status: 'pending' },

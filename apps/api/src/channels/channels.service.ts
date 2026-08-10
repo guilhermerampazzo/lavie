@@ -32,7 +32,11 @@ export interface ChannelAdapter {
   /** true quando as credenciais do canal estão configuradas (env ou banco). */
   configured: boolean;
   /** Publica (ou atualiza) o produto no canal. */
-  publish(productId: string): Promise<{ externalId?: string; status: 'published' | 'pending'; message?: string }>;
+  publish(productId: string): Promise<{
+    externalId?: string;
+    status: 'published' | 'pending';
+    message?: string;
+  }>;
 }
 
 /**
@@ -61,15 +65,60 @@ export class ChannelsService {
         configured: this.nuvemshop.configured,
         publish: (id) => this.publishNuvemshop(id),
       },
-      { key: 'site', label: 'Site (Nuvemshop)', configured: this.nuvemshop.configured, publish: (id) => this.publishNuvemshop(id) },
-      { key: 'instagram', label: 'Instagram Shop', configured: false, publish: () => this.pending('Instagram Shop') },
-      { key: 'tiktok', label: 'TikTok Shop', configured: false, publish: () => this.pending('TikTok Shop') },
-      { key: 'mercado_livre', label: 'Mercado Livre', configured: false, publish: () => this.pending('Mercado Livre') },
-      { key: 'shopee', label: 'Shopee', configured: false, publish: () => this.pending('Shopee') },
-      { key: 'amazon', label: 'Amazon Brasil', configured: false, publish: () => this.pending('Amazon Brasil') },
-      { key: 'shein', label: 'Shein', configured: false, publish: () => this.pending('Shein') },
-      { key: 'revendedora', label: 'Portal de Revendedoras', configured: true, publish: () => this.publishReseller() },
-      { key: 'fisico', label: 'Físico / PDV', configured: true, publish: () => this.publishReseller() },
+      {
+        key: 'site',
+        label: 'Site (Nuvemshop)',
+        configured: this.nuvemshop.configured,
+        publish: (id) => this.publishNuvemshop(id),
+      },
+      {
+        key: 'instagram',
+        label: 'Instagram Shop',
+        configured: false,
+        publish: () => this.pending('Instagram Shop'),
+      },
+      {
+        key: 'tiktok',
+        label: 'TikTok Shop',
+        configured: false,
+        publish: () => this.pending('TikTok Shop'),
+      },
+      {
+        key: 'mercado_livre',
+        label: 'Mercado Livre',
+        configured: false,
+        publish: () => this.pending('Mercado Livre'),
+      },
+      {
+        key: 'shopee',
+        label: 'Shopee',
+        configured: false,
+        publish: () => this.pending('Shopee'),
+      },
+      {
+        key: 'amazon',
+        label: 'Amazon Brasil',
+        configured: false,
+        publish: () => this.pending('Amazon Brasil'),
+      },
+      {
+        key: 'shein',
+        label: 'Shein',
+        configured: false,
+        publish: () => this.pending('Shein'),
+      },
+      {
+        key: 'revendedora',
+        label: 'Portal de Revendedoras',
+        configured: true,
+        publish: () => this.publishReseller(),
+      },
+      {
+        key: 'fisico',
+        label: 'Físico / PDV',
+        configured: true,
+        publish: () => this.publishReseller(),
+      },
     ];
   }
 
@@ -82,7 +131,10 @@ export class ChannelsService {
 
   private async publishNuvemshop(productId: string) {
     if (!this.nuvemshop.configured) {
-      return { status: 'pending' as const, message: 'Nuvemshop: credenciais não configuradas.' };
+      return {
+        status: 'pending' as const,
+        message: 'Nuvemshop: credenciais não configuradas.',
+      };
     }
     const product = await this.products.publish(productId);
     return {
@@ -103,12 +155,20 @@ export class ChannelsService {
   async listChannels() {
     const credStatus = await this.credentials.getStatus();
     return this.adapters.map((a) => {
-      const dbCreds = CREDENTIAL_CHANNELS.includes(a.key) ? credStatus[a.key] : undefined;
+      const dbCreds = CREDENTIAL_CHANNELS.includes(a.key)
+        ? credStatus[a.key]
+        : undefined;
       return {
         key: a.key,
         label: a.label,
-        configured: a.configured || Boolean((dbCreds as { hasCredentials?: boolean } | undefined)?.hasCredentials),
-        credentialFields: (dbCreds as { fields?: unknown } | undefined)?.fields ?? null,
+        configured:
+          a.configured ||
+          Boolean(
+            (dbCreds as { hasCredentials?: boolean } | undefined)
+              ?.hasCredentials,
+          ),
+        credentialFields:
+          (dbCreds as { fields?: unknown } | undefined)?.fields ?? null,
       };
     });
   }
@@ -126,7 +186,9 @@ export class ChannelsService {
 
     const selected = product.canais.map((c) => c.channel);
     if (selected.length === 0) {
-      throw new Error('Produto sem canais selecionados — escolha os canais no cadastro.');
+      throw new Error(
+        'Produto sem canais selecionados — escolha os canais no cadastro.',
+      );
     }
 
     const results: Array<{
@@ -151,9 +213,18 @@ export class ChannelsService {
         results.push({ channel: key, label: adapter.label, ...result });
       } catch (err) {
         await this.prisma.client.syncJob.create({
-          data: { type: `channel:${key}`, status: 'failed', error: (err as Error).message.slice(0, 500) },
+          data: {
+            type: `channel:${key}`,
+            status: 'failed',
+            error: (err as Error).message.slice(0, 500),
+          },
         });
-        results.push({ channel: key, label: adapter.label, status: 'failed', message: (err as Error).message });
+        results.push({
+          channel: key,
+          label: adapter.label,
+          status: 'failed',
+          message: (err as Error).message,
+        });
       }
     }
     return results;

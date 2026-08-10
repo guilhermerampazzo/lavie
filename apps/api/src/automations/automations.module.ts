@@ -7,10 +7,7 @@ import { AutomationsProcessor } from './automations.processor';
 import { EvolutionModule } from '../evolution/evolution.module';
 
 @Module({
-  imports: [
-    EvolutionModule,
-    BullModule.registerQueue({ name: 'automations' }),
-  ],
+  imports: [EvolutionModule, BullModule.registerQueue({ name: 'automations' })],
   controllers: [AutomationsController],
   providers: [AutomationsService, AutomationsProcessor],
 })

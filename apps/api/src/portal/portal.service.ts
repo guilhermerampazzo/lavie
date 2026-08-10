@@ -1,6 +1,14 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePortalOrderDto, CreateReturnRequestDto } from './dto/portal-order.dto';
+import {
+  CreatePortalOrderDto,
+  CreateReturnRequestDto,
+} from './dto/portal-order.dto';
 
 @Injectable()
 export class PortalService {
@@ -8,7 +16,9 @@ export class PortalService {
 
   private ensureReseller(resellerId?: string | null): string {
     if (!resellerId) {
-      throw new ForbiddenException('Usuário não está vinculado a uma revendedora.');
+      throw new ForbiddenException(
+        'Usuário não está vinculado a uma revendedora.',
+      );
     }
     return resellerId;
   }
@@ -19,13 +29,17 @@ export class PortalService {
   ): number {
     return (
       priceMap.get(product.id) ??
-      (product.precoRevendedora ? Number(product.precoRevendedora) : Number(product.precoBase))
+      (product.precoRevendedora
+        ? Number(product.precoRevendedora)
+        : Number(product.precoBase))
     );
   }
 
   /** Quantidade mínima por item no catálogo (configurável em Setting). */
   private async minQuantity(): Promise<number> {
-    const setting = await this.prisma.client.setting.findUnique({ where: { key: 'portal_min_quantity' } });
+    const setting = await this.prisma.client.setting.findUnique({
+      where: { key: 'portal_min_quantity' },
+    });
     const value = (setting?.value as { value?: number } | undefined)?.value;
     return typeof value === 'number' && value > 0 ? value : 1;
   }
@@ -37,22 +51,32 @@ export class PortalService {
         where: { status: 'active' },
         include: { variants: true, images: true },
       }),
-      this.prisma.client.resellerPriceTable.findMany({ where: { resellerId: id } }),
+      this.prisma.client.resellerPriceTable.findMany({
+        where: { resellerId: id },
+      }),
       this.minQuantity(),
       this.prisma.client.resellerKit.findMany({
         where: { active: true },
-        include: { items: { include: { product: { include: { variants: true } } } } },
+        include: {
+          items: { include: { product: { include: { variants: true } } } },
+        },
       }),
     ]);
 
-    const priceMap = new Map(priceTable.map((p) => [p.productId, Number(p.price)]));
+    const priceMap = new Map(
+      priceTable.map((p) => [p.productId, Number(p.price)]),
+    );
 
     const items = products.map((p) => ({
       id: p.id,
       nome: p.nomeGerado,
       precoVarejo: Number(p.precoBase),
       precoRevenda: this.resellerPrice(p, priceMap),
-      variants: p.variants.map((v) => ({ id: v.id, sku: v.sku, estoque: v.estoque })),
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        sku: v.sku,
+        estoque: v.estoque,
+      })),
     }));
 
     // Kits exclusivos com desconto adicional (escopofinal.md 7.3)
@@ -93,19 +117,30 @@ export class PortalService {
     });
   }
 
-  async createOrder(resellerId: string | null | undefined, dto: CreatePortalOrderDto) {
+  async createOrder(
+    resellerId: string | null | undefined,
+    dto: CreatePortalOrderDto,
+  ) {
     const id = this.ensureReseller(resellerId);
     const minQty = await this.minQuantity();
 
     const variantIds = dto.items.map((i) => i.variantId);
     const productIds = dto.items.map((i) => i.productId);
     const [variants, products, priceTable] = await Promise.all([
-      this.prisma.client.variant.findMany({ where: { id: { in: variantIds } } }),
-      this.prisma.client.product.findMany({ where: { id: { in: productIds } } }),
-      this.prisma.client.resellerPriceTable.findMany({ where: { resellerId: id } }),
+      this.prisma.client.variant.findMany({
+        where: { id: { in: variantIds } },
+      }),
+      this.prisma.client.product.findMany({
+        where: { id: { in: productIds } },
+      }),
+      this.prisma.client.resellerPriceTable.findMany({
+        where: { resellerId: id },
+      }),
     ]);
     if (variants.length !== variantIds.length) {
-      throw new BadRequestException('Uma ou mais variantes não foram encontradas.');
+      throw new BadRequestException(
+        'Uma ou mais variantes não foram encontradas.',
+      );
     }
 
     // Quantidade mínima por item
@@ -117,7 +152,9 @@ export class PortalService {
       }
     }
 
-    const priceMap = new Map(priceTable.map((p) => [p.productId, Number(p.price)]));
+    const priceMap = new Map(
+      priceTable.map((p) => [p.productId, Number(p.price)]),
+    );
 
     let total = 0;
     const itemsData = dto.items.map((item) => {
@@ -148,21 +185,27 @@ export class PortalService {
         resellerId: id,
         orderId: order.id,
         paymentMethod: dto.paymentMethod,
-        paymentStatus: dto.paymentMethod === 'credito_em_conta' ? 'pago' : 'pendente',
+        paymentStatus:
+          dto.paymentMethod === 'credito_em_conta' ? 'pago' : 'pendente',
       },
       include: { order: { include: { items: true } } },
     });
   }
 
   /** Solicitação de troca/devolução pelo portal (escopofinal.md 7.4). */
-  async createReturn(resellerId: string | null | undefined, dto: CreateReturnRequestDto) {
+  async createReturn(
+    resellerId: string | null | undefined,
+    dto: CreateReturnRequestDto,
+  ) {
     const id = this.ensureReseller(resellerId);
 
     const resellerOrder = await this.prisma.client.resellerOrder.findUnique({
       where: { orderId: dto.orderId },
     });
     if (!resellerOrder || resellerOrder.resellerId !== id) {
-      throw new NotFoundException('Pedido não encontrado para esta revendedora.');
+      throw new NotFoundException(
+        'Pedido não encontrado para esta revendedora.',
+      );
     }
 
     return this.prisma.client.returnRequest.create({
@@ -185,6 +228,8 @@ export class PortalService {
 
   async priceTable(resellerId?: string | null) {
     const id = this.ensureReseller(resellerId);
-    return this.prisma.client.resellerPriceTable.findMany({ where: { resellerId: id } });
+    return this.prisma.client.resellerPriceTable.findMany({
+      where: { resellerId: id },
+    });
   }
 }

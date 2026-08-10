@@ -28,11 +28,23 @@ function daysBetween(a: Date, b: Date): number {
   return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function isBirthdayWithinWindow(birthDate: Date, now: Date, windowDays: number): boolean {
-  const thisYear = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+function isBirthdayWithinWindow(
+  birthDate: Date,
+  now: Date,
+  windowDays: number,
+): boolean {
+  const thisYear = new Date(
+    now.getFullYear(),
+    birthDate.getMonth(),
+    birthDate.getDate(),
+  );
   const diff = daysBetween(thisYear, now);
   if (diff >= 0 && diff <= windowDays) return true;
-  const nextYear = new Date(now.getFullYear() + 1, birthDate.getMonth(), birthDate.getDate());
+  const nextYear = new Date(
+    now.getFullYear() + 1,
+    birthDate.getMonth(),
+    birthDate.getDate(),
+  );
   const diffNext = daysBetween(nextYear, now);
   return diffNext >= 0 && diffNext <= windowDays;
 }
@@ -48,23 +60,41 @@ export function computeSegments(
   thresholds: SegmentationThresholds = DEFAULT_SEGMENTATION_THRESHOLDS,
   now: Date = new Date(),
 ): Array<'vip' | 'fiel' | 'novo' | 'a_reativar' | 'aniversariante'> {
-  const segments: Array<'vip' | 'fiel' | 'novo' | 'a_reativar' | 'aniversariante'> = [];
+  const segments: Array<
+    'vip' | 'fiel' | 'novo' | 'a_reativar' | 'aniversariante'
+  > = [];
 
-  if (input.totalSpent >= thresholds.vipTotalSpent || input.ordersCount >= thresholds.vipOrdersCount) {
+  if (
+    input.totalSpent >= thresholds.vipTotalSpent ||
+    input.ordersCount >= thresholds.vipOrdersCount
+  ) {
     segments.push('vip');
   } else if (input.ordersCount >= thresholds.fielOrdersCount) {
     segments.push('fiel');
   }
 
-  if (input.ordersCount <= 1 && daysBetween(now, input.createdAt) <= thresholds.novoDias) {
+  if (
+    input.ordersCount <= 1 &&
+    daysBetween(now, input.createdAt) <= thresholds.novoDias
+  ) {
     segments.push('novo');
   }
 
-  if (input.lastOrderAt && daysBetween(now, input.lastOrderAt) >= thresholds.reativarDias) {
+  if (
+    input.lastOrderAt &&
+    daysBetween(now, input.lastOrderAt) >= thresholds.reativarDias
+  ) {
     segments.push('a_reativar');
   }
 
-  if (input.birthDate && isBirthdayWithinWindow(input.birthDate, now, thresholds.aniversarioJanelaDias)) {
+  if (
+    input.birthDate &&
+    isBirthdayWithinWindow(
+      input.birthDate,
+      now,
+      thresholds.aniversarioJanelaDias,
+    )
+  ) {
     segments.push('aniversariante');
   }
 

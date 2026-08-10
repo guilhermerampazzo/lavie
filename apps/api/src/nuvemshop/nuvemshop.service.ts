@@ -25,7 +25,8 @@ export class NuvemshopService {
     const storeId = config.get<string>('NUVEMSHOP_STORE_ID') ?? '';
     const accessToken = config.get<string>('NUVEMSHOP_ACCESS_TOKEN') ?? '';
     this.configured = Boolean(storeId && accessToken);
-    this.publicUrl = config.get<string>('PUBLIC_URL') ?? 'http://localhost:10215';
+    this.publicUrl =
+      config.get<string>('PUBLIC_URL') ?? 'http://localhost:10215';
 
     this.client = new NuvemshopClient({
       storeId,
@@ -45,10 +46,18 @@ export class NuvemshopService {
    * (pedido criado/pago/atualizado, produto e cliente). Idempotente — pula
    * eventos ja cadastrados apontando para a mesma URL.
    */
-  async registerWebhooks(): Promise<{ created: string[]; alreadyRegistered: string[] }> {
+  async registerWebhooks(): Promise<{
+    created: string[];
+    alreadyRegistered: string[];
+  }> {
     const callbackUrl = `${this.publicUrl}/api/webhooks/nuvemshop`;
-    const existing = (await this.client.webhooks.list()) as Array<{ event: string; url: string }>;
-    const existingEvents = new Set(existing.filter((w) => w.url === callbackUrl).map((w) => w.event));
+    const existing = (await this.client.webhooks.list()) as Array<{
+      event: string;
+      url: string;
+    }>;
+    const existingEvents = new Set(
+      existing.filter((w) => w.url === callbackUrl).map((w) => w.event),
+    );
 
     const created: string[] = [];
     const alreadyRegistered: string[] = [];

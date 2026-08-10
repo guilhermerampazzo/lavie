@@ -27,7 +27,11 @@ export class AutomationsController {
   @Post('run/:flow')
   runFlow(@Body() body: { flow?: string }) {
     const flow = body.flow ?? 'run-all';
-    return this.queue.add(flow, {}, { removeOnComplete: 1000, removeOnFail: 1000 });
+    return this.queue.add(
+      flow,
+      {},
+      { removeOnComplete: 1000, removeOnFail: 1000 },
+    );
   }
 
   /** Últimos disparos registrados (auditoria do follow-up automático). */

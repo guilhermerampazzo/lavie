@@ -13,7 +13,10 @@ export class WebhooksController {
 
   @Post(':source')
   @HttpCode(200)
-  async receive(@Param('source') source: string, @Body() body: Record<string, unknown>) {
+  async receive(
+    @Param('source') source: string,
+    @Body() body: Record<string, unknown>,
+  ) {
     const event = await this.prisma.client.webhookEvent.create({
       data: {
         source,
@@ -22,7 +25,11 @@ export class WebhooksController {
       },
     });
 
-    await this.queue.add('process', { eventId: event.id }, { attempts: 5, backoff: { type: 'exponential', delay: 2000 } });
+    await this.queue.add(
+      'process',
+      { eventId: event.id },
+      { attempts: 5, backoff: { type: 'exponential', delay: 2000 } },
+    );
 
     return { received: true };
   }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NuvemshopService } from '../nuvemshop/nuvemshop.service';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
@@ -17,16 +21,23 @@ export class CouponsService {
   ) {}
 
   list() {
-    return this.prisma.client.coupon.findMany({ orderBy: { createdAt: 'desc' } });
+    return this.prisma.client.coupon.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async get(id: string) {
-    const coupon = await this.prisma.client.coupon.findUnique({ where: { id } });
+    const coupon = await this.prisma.client.coupon.findUnique({
+      where: { id },
+    });
     if (!coupon) throw new NotFoundException('Cupom não encontrado');
     return coupon;
   }
 
-  private buildNuvemshopPayload(dto: CreateCouponDto | UpdateCouponDto, code: string) {
+  private buildNuvemshopPayload(
+    dto: CreateCouponDto | UpdateCouponDto,
+    code: string,
+  ) {
     return {
       code,
       type: TYPE_TO_NUVEMSHOP[dto.type ?? 'fixed'],
@@ -69,7 +80,9 @@ export class CouponsService {
         this.buildNuvemshopPayload(dto, dto.code ?? existing.code),
       );
     } else if (this.nuvemshop.configured) {
-      throw new BadRequestException('Cupom sem vínculo com a Nuvemshop — recrie o cupom.');
+      throw new BadRequestException(
+        'Cupom sem vínculo com a Nuvemshop — recrie o cupom.',
+      );
     }
 
     return this.prisma.client.coupon.update({

@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ConversationsService } from './conversations.service';
-import { sendMessageSchema, updateConversationSchema } from './dto/conversation.dto';
+import {
+  sendMessageSchema,
+  updateConversationSchema,
+} from './dto/conversation.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'equipe')

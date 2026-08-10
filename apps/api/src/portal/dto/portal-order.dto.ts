@@ -10,7 +10,9 @@ export const createPortalOrderSchema = z.object({
       }),
     )
     .min(1),
-  paymentMethod: z.enum(['boleto', 'pix', 'transferencia', 'credito_em_conta']).default('pix'),
+  paymentMethod: z
+    .enum(['boleto', 'pix', 'transferencia', 'credito_em_conta'])
+    .default('pix'),
 });
 
 export const createReturnRequestSchema = z.object({

@@ -28,7 +28,9 @@ export class FinanceService {
   }
 
   async get(id: string) {
-    const account = await this.prisma.client.account.findUnique({ where: { id } });
+    const account = await this.prisma.client.account.findUnique({
+      where: { id },
+    });
     if (!account) throw new NotFoundException('Conta não encontrada');
     return account;
   }
@@ -67,12 +69,20 @@ export class FinanceService {
   /** Fluxo de caixa: entradas e saídas previstas/realizadas por mês (6 meses). */
   async cashFlow() {
     const now = new Date();
-    const months: Array<{ month: string; receivables: number; payables: number; balance: number }> = [];
+    const months: Array<{
+      month: string;
+      receivables: number;
+      payables: number;
+      balance: number;
+    }> = [];
 
     for (let i = 0; i < 6; i++) {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      const label = start.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+      const label = start.toLocaleDateString('pt-BR', {
+        month: 'short',
+        year: '2-digit',
+      });
 
       const [receivables, payables] = await Promise.all([
         this.prisma.client.account.aggregate({

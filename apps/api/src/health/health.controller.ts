@@ -4,6 +4,10 @@ import { Controller, Get } from '@nestjs/common';
 export class HealthController {
   @Get()
   check() {
-    return { status: 'ok', service: 'lavie-api', time: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'lavie-api',
+      time: new Date().toISOString(),
+    };
   }
 }

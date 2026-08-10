@@ -33,4 +33,6 @@ export type CreateAffiliateDto = z.infer<typeof createAffiliateSchema>;
 export type UpdateAffiliateDto = z.infer<typeof updateAffiliateSchema>;
 export type CreateTrackingLinkDto = z.infer<typeof createTrackingLinkSchema>;
 export type CreateCommissionDto = z.infer<typeof createCommissionSchema>;
-export type CreateAffiliateMaterialDto = z.infer<typeof createAffiliateMaterialSchema>;
+export type CreateAffiliateMaterialDto = z.infer<
+  typeof createAffiliateMaterialSchema
+>;

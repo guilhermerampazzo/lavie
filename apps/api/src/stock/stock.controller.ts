@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { CurrentUser, type CurrentUserPayload } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type CurrentUserPayload,
+} from '../common/decorators/current-user.decorator';
 import { StockService } from './stock.service';
 import { createStockMovementSchema } from './dto/stock-movement.dto';
 
@@ -24,6 +35,9 @@ export class StockController {
 
   @Post('movements')
   create(@CurrentUser() user: CurrentUserPayload, @Body() body: unknown) {
-    return this.service.create(createStockMovementSchema.parse(body), user.userId);
+    return this.service.create(
+      createStockMovementSchema.parse(body),
+      user.userId,
+    );
   }
 }

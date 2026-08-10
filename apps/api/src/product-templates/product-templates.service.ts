@@ -1,17 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateProductTemplateDto, UpdateProductTemplateDto } from './dto/product-template.dto';
+import {
+  CreateProductTemplateDto,
+  UpdateProductTemplateDto,
+} from './dto/product-template.dto';
 
 @Injectable()
 export class ProductTemplatesService {
   constructor(private readonly prisma: PrismaService) {}
 
   list() {
-    return this.prisma.client.productTemplate.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.client.productTemplate.findMany({
+      orderBy: { name: 'asc' },
+    });
   }
 
   async get(id: string) {
-    const template = await this.prisma.client.productTemplate.findUnique({ where: { id } });
+    const template = await this.prisma.client.productTemplate.findUnique({
+      where: { id },
+    });
     if (!template) throw new NotFoundException('Template não encontrado');
     return template;
   }
@@ -22,7 +29,10 @@ export class ProductTemplatesService {
 
   async update(id: string, dto: UpdateProductTemplateDto) {
     await this.get(id);
-    return this.prisma.client.productTemplate.update({ where: { id }, data: dto });
+    return this.prisma.client.productTemplate.update({
+      where: { id },
+      data: dto,
+    });
   }
 
   async remove(id: string) {

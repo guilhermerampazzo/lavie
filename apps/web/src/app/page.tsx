@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { apiServerFetch } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
+import { PeriodSelector } from "@/components/dashboard/period-selector";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import {
   AlertTriangle,
@@ -41,28 +42,23 @@ function Variation({ value }: { value: number | null }) {
   );
 }
 
-const PERIODS = [
-  { value: "today", label: "Hoje" },
-  { value: "week", label: "Semana" },
-  { value: "month", label: "Mês" },
-  { value: "quarter", label: "Trimestre" },
-  { value: "year", label: "Ano" },
-] as const;
-
 export default async function Home({
   searchParams,
 }: {
-  searchParams: { period?: string };
+  searchParams: { period?: string; from?: string; to?: string };
 }) {
   const session = await auth();
   const period = (searchParams.period ?? "month") as "today" | "week" | "month" | "quarter" | "year";
+  const { from, to } = searchParams;
 
   if (session?.user?.role === "revendedora") {
     return null;
   }
 
+  const rangeQuery = from && to ? `&from=${from}&to=${to}` : "";
+
   const [metrics, stock, affiliateRanking, alerts] = await Promise.all([
-    apiServerFetch<DashboardMetrics>(`/dashboard/metrics?period=${period}`).catch(
+    apiServerFetch<DashboardMetrics>(`/dashboard/metrics?period=${period}${rangeQuery}`).catch(
       () =>
         ({
           revenue: 0,
@@ -112,19 +108,7 @@ export default async function Home({
             <h1 className="mb-1 font-serif text-[22px] font-medium text-ink">Dashboard</h1>
             <p className="text-[12.5px] text-muted-foreground">Visão geral da operação La Vie</p>
           </div>
-          <div className="flex overflow-hidden rounded-lg border border-line">
-            {PERIODS.map((p) => (
-              <Link
-                key={p.value}
-                href={`/?period=${p.value}`}
-                className={`border-r border-line px-3 py-1.5 text-[11.5px] last:border-r-0 ${
-                  period === p.value ? "bg-brand-soft font-medium text-brand-dark" : "text-muted-foreground"
-                }`}
-              >
-                {p.label}
-              </Link>
-            ))}
-          </div>
+          <PeriodSelector current={period} />
         </div>
 
         {/* KPIs com variação */}

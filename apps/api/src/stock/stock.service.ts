@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStockMovementDto } from './dto/stock-movement.dto';
 
@@ -44,10 +48,14 @@ export class StockService {
    * "ajuste" usa reason para indicar o sinal ("-5" para reduzir).
    */
   async create(dto: CreateStockMovementDto, userId?: string) {
-    const variant = await this.prisma.client.variant.findUnique({ where: { id: dto.variantId } });
+    const variant = await this.prisma.client.variant.findUnique({
+      where: { id: dto.variantId },
+    });
     if (!variant) throw new NotFoundException('Variante não encontrada');
 
-    const addsStock = ['entrada', 'consignacao_retorno', 'devolucao'].includes(dto.type);
+    const addsStock = ['entrada', 'consignacao_retorno', 'devolucao'].includes(
+      dto.type,
+    );
     let delta = dto.quantity;
     if (!addsStock) delta = -dto.quantity;
     // ajuste: reason pode conter sinal explícito ex.: "-5" ou "+5"

@@ -42,20 +42,36 @@ export class DashboardService {
 
   /**
    * Métricas principais + comparativo com o período anterior (escopofinal.md 2.1).
-   * Inclui: vendas por canal, ticket médio, produtos mais vendidos, maior margem,
-   * taxa de conversão (pedidos / clientes do período).
+   * Aceita `from`/`to` customizados (ISO) ou um preset (today/week/month/quarter/year).
+   * O comparativo anterior usa a MESMA duração do período selecionado.
    */
-  async metrics(period: Period = 'month') {
-    const from = startOfPeriod(period);
-    const prevFrom = startOfPeriod(period, 1);
+  async metrics(period: Period = 'month', fromIso?: string, toIso?: string) {
+    let from: Date;
+    let to: Date;
+    let prevFrom: Date;
+
+    if (fromIso && toIso) {
+      from = new Date(fromIso);
+      to = new Date(toIso);
+      const duration = to.getTime() - from.getTime();
+      prevFrom = new Date(from.getTime() - duration - 1);
+      to = new Date(to.getTime() + 86_399_000); // inclui o dia final inteiro
+    } else {
+      from = startOfPeriod(period);
+      to = new Date();
+      prevFrom = startOfPeriod(period, 1);
+    }
 
     const [orders, prevOrders] = await Promise.all([
       this.prisma.client.order.findMany({
-        where: { createdAt: { gte: from }, status: { not: 'cancelado' } },
+        where: { createdAt: { gte: from, lte: to }, status: { not: 'cancelado' } },
         include: { items: { include: { product: true } } },
       }),
       this.prisma.client.order.findMany({
-        where: { createdAt: { gte: prevFrom, lt: from }, status: { not: 'cancelado' } },
+        where: {
+          createdAt: { gte: prevFrom, lt: from },
+          status: { not: 'cancelado' },
+        },
         include: { items: { include: { product: true } } },
       }),
     ]);
@@ -65,17 +81,26 @@ export class DashboardService {
     const ordersCount = orders.length;
     const prevOrdersCount = prevOrders.length;
     const avgTicket = ordersCount > 0 ? revenue / ordersCount : 0;
-    const prevAvgTicket = prevOrdersCount > 0 ? prevRevenue / prevOrdersCount : 0;
+    const prevAvgTicket =
+      prevOrdersCount > 0 ? prevRevenue / prevOrdersCount : 0;
 
     // Por canal
     const byChannelMap = new Map<string, number>();
     for (const o of orders) {
-      byChannelMap.set(o.channel, (byChannelMap.get(o.channel) ?? 0) + Number(o.total));
+      byChannelMap.set(
+        o.channel,
+        (byChannelMap.get(o.channel) ?? 0) + Number(o.total),
+      );
     }
-    const byChannel = Array.from(byChannelMap.entries()).map(([channel, total]) => ({ channel, total }));
+    const byChannel = Array.from(byChannelMap.entries()).map(
+      ([channel, total]) => ({ channel, total }),
+    );
 
     // Produtos mais vendidos (por quantidade e receita)
-    const productSales = new Map<string, { nome: string; qty: number; revenue: number; custo?: number }>();
+    const productSales = new Map<
+      string,
+      { nome: string; qty: number; revenue: number; custo?: number }
+    >();
     for (const o of orders) {
       for (const item of o.items) {
         const key = item.productId ?? item.sku;
@@ -83,7 +108,9 @@ export class DashboardService {
           nome: item.name,
           qty: 0,
           revenue: 0,
-          custo: item.product?.precoCusto ? Number(item.product.precoCusto) : undefined,
+          custo: item.product?.precoCusto
+            ? Number(item.product.precoCusto)
+            : undefined,
         };
         entry.qty += item.quantity;
         entry.revenue += Number(item.unitPrice) * item.quantity;
@@ -96,7 +123,10 @@ export class DashboardService {
       .map((p) => ({ nome: p.nome, qty: p.qty, revenue: p.revenue }));
 
     const topProductsByMargin = Array.from(productSales.values())
-      .filter((p): p is typeof p & { custo: number } => p.custo !== undefined && p.custo > 0)
+      .filter(
+        (p): p is typeof p & { custo: number } =>
+          p.custo !== undefined && p.custo > 0,
+      )
       .map((p) => ({
         nome: p.nome,
         revenue: p.revenue,
@@ -112,7 +142,8 @@ export class DashboardService {
     const customersCount = await this.prisma.client.customer.count({
       where: { createdAt: { lte: from } },
     });
-    const conversionRate = customersCount > 0 ? (ordersCount / customersCount) * 100 : 0;
+    const conversionRate =
+      customersCount > 0 ? (ordersCount / customersCount) * 100 : 0;
 
     // Ranking de revendedoras
     const resellerOrders = await this.prisma.client.resellerOrder.findMany({
@@ -122,7 +153,10 @@ export class DashboardService {
     const rankingMap = new Map<string, number>();
     for (const ro of resellerOrders) {
       if (!ro.order) continue;
-      rankingMap.set(ro.reseller.name, (rankingMap.get(ro.reseller.name) ?? 0) + Number(ro.order.total));
+      rankingMap.set(
+        ro.reseller.name,
+        (rankingMap.get(ro.reseller.name) ?? 0) + Number(ro.order.total),
+      );
     }
     const resellerRanking = Array.from(rankingMap.entries())
       .map(([name, total]) => ({ name, total }))
@@ -134,7 +168,10 @@ export class DashboardService {
       where: { status: { in: ['pendente', 'aprovado'] } },
       include: { affiliate: true },
     });
-    const commissionsToPay = commissions.reduce((s, c) => s + Number(c.amount), 0);
+    const commissionsToPay = commissions.reduce(
+      (s, c) => s + Number(c.amount),
+      0,
+    );
     const affiliateCommissionRanking = Array.from(
       commissions.reduce((map, c) => {
         const name = c.affiliate.name;
@@ -197,7 +234,8 @@ export class DashboardService {
       for (const item of o.items) {
         if (!item.productId) continue;
         const prev = soldProductIds.get(item.productId);
-        if (!prev || o.createdAt > prev) soldProductIds.set(item.productId, o.createdAt);
+        if (!prev || o.createdAt > prev)
+          soldProductIds.set(item.productId, o.createdAt);
       }
     }
 
@@ -212,11 +250,21 @@ export class DashboardService {
     }));
 
     // Estoque crítico: abaixo do mínimo definido
-    const critical: Array<{ id: string; nome: string; estoque: number; minimo: number }> = [];
+    const critical: Array<{
+      id: string;
+      nome: string;
+      estoque: number;
+      minimo: number;
+    }> = [];
     for (const p of products) {
       const stock = p.variants.reduce((s, v) => s + v.estoque, 0);
       if (p.estoqueMinimo > 0 && stock < p.estoqueMinimo) {
-        critical.push({ id: p.id, nome: p.nomeGerado, estoque: stock, minimo: p.estoqueMinimo });
+        critical.push({
+          id: p.id,
+          nome: p.nomeGerado,
+          estoque: stock,
+          minimo: p.estoqueMinimo,
+        });
       }
     }
 
@@ -225,14 +273,22 @@ export class DashboardService {
     for (const o of ordersFull) {
       for (const item of o.items) {
         if (!item.productId) continue;
-        productQty.set(item.productId, (productQty.get(item.productId) ?? 0) + 1);
+        productQty.set(
+          item.productId,
+          (productQty.get(item.productId) ?? 0) + 1,
+        );
       }
     }
     const turnover = Array.from(productQty.entries())
       .map(([id, qty]) => {
         const p = products.find((x) => x.id === id);
         const stock = p ? p.variants.reduce((s, v) => s + v.estoque, 0) : 0;
-        return { nome: p?.nomeGerado ?? id, vendas: qty, estoque: stock, giro: stock > 0 ? qty / stock : qty };
+        return {
+          nome: p?.nomeGerado ?? id,
+          vendas: qty,
+          estoque: stock,
+          giro: stock > 0 ? qty / stock : qty,
+        };
       })
       .sort((a, b) => b.vendas - a.vendas)
       .slice(0, 5);
@@ -247,7 +303,9 @@ export class DashboardService {
     return {
       totalUnits,
       totalProducts: products.length,
-      byCategory: Array.from(totalByCategory.entries()).map(([category, total]) => ({ category, total })),
+      byCategory: Array.from(totalByCategory.entries()).map(
+        ([category, total]) => ({ category, total }),
+      ),
       stagnant,
       critical: critical.slice(0, 10),
       criticalCount: critical.length,
@@ -265,13 +323,25 @@ export class DashboardService {
    */
   async affiliateRanking() {
     const affiliates = await this.prisma.client.affiliate.findMany({
-      include: { trackingLinks: true, commissions: { include: { order: true } } },
+      include: {
+        trackingLinks: true,
+        commissions: { include: { order: true } },
+      },
     });
 
     const ranking = affiliates.map((a) => {
-      const conversions = a.trackingLinks.reduce((s, l) => s + l.conversions, 0);
-      const revenue = a.commissions.reduce((s, c) => s + Number(c.order?.total ?? 0), 0);
-      const commissionTotal = a.commissions.reduce((s, c) => s + Number(c.amount), 0);
+      const conversions = a.trackingLinks.reduce(
+        (s, l) => s + l.conversions,
+        0,
+      );
+      const revenue = a.commissions.reduce(
+        (s, c) => s + Number(c.order?.total ?? 0),
+        0,
+      );
+      const commissionTotal = a.commissions.reduce(
+        (s, c) => s + Number(c.amount),
+        0,
+      );
       const roi = commissionTotal > 0 ? revenue / commissionTotal : null;
       return {
         id: a.id,
@@ -288,7 +358,12 @@ export class DashboardService {
   }
 
   async alerts() {
-    const alerts: Array<{ id: string; severity: 'warning' | 'danger'; message: string; href?: string }> = [];
+    const alerts: Array<{
+      id: string;
+      severity: 'warning' | 'danger';
+      message: string;
+      href?: string;
+    }> = [];
 
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
     const stuckOrders = await this.prisma.client.order.findMany({
@@ -339,7 +414,9 @@ export class DashboardService {
       }
     }
 
-    const pendingResellers = await this.prisma.client.reseller.count({ where: { status: 'pendente' } });
+    const pendingResellers = await this.prisma.client.reseller.count({
+      where: { status: 'pendente' },
+    });
     if (pendingResellers > 0) {
       alerts.push({
         id: 'resellers-pending',

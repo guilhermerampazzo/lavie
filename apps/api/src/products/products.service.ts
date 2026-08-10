@@ -50,7 +50,12 @@ export class ProductsService {
     private readonly suppliers: SuppliersService,
   ) {}
 
-  list(params: { status?: string; categoryId?: string; search?: string; supplierId?: string }) {
+  list(params: {
+    status?: string;
+    categoryId?: string;
+    search?: string;
+    supplierId?: string;
+  }) {
     return this.prisma.client.product.findMany({
       where: {
         status: params.status as never,
@@ -64,7 +69,13 @@ export class ProductsService {
             ]
           : undefined,
       },
-      include: { variants: true, images: true, category: true, supplier: true, canais: true },
+      include: {
+        variants: true,
+        images: true,
+        category: true,
+        supplier: true,
+        canais: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -110,22 +121,30 @@ export class ProductsService {
       for (const c of candidates) {
         const cand = normalize(c.nomeGerado);
         // similaridade por palavras em comum
-        const targetWords = new Set(target.split(' ').filter((w) => w.length > 2));
+        const targetWords = new Set(
+          target.split(' ').filter((w) => w.length > 2),
+        );
         const candWords = new Set(cand.split(' ').filter((w) => w.length > 2));
         if (targetWords.size === 0 || candWords.size === 0) continue;
         let common = 0;
         for (const w of targetWords) if (candWords.has(w)) common++;
         const ratio = common / Math.max(targetWords.size, candWords.size);
-        if (ratio >= 0.6) return { duplicate: true, product: c, reason: 'nome' };
+        if (ratio >= 0.6)
+          return { duplicate: true, product: c, reason: 'nome' };
       }
     }
 
     return { duplicate: false };
   }
 
-  private async renderFromTemplate(templateId: string | undefined, dto: CreateProductDto | UpdateProductDto) {
+  private async renderFromTemplate(
+    templateId: string | undefined,
+    dto: CreateProductDto | UpdateProductDto,
+  ) {
     if (!templateId) return null;
-    const template = await this.prisma.client.productTemplate.findUnique({ where: { id: templateId } });
+    const template = await this.prisma.client.productTemplate.findUnique({
+      where: { id: templateId },
+    });
     if (!template) throw new BadRequestException('Template inválido');
 
     return renderProduct(template, {
@@ -150,9 +169,12 @@ export class ProductsService {
     }
 
     const rendered = await this.renderFromTemplate(dto.templateId, dto);
-    const nomeGerado = rendered?.nome ?? dto.nomePeca ?? dto.descricaoSugerida?.slice(0, 80) ?? 'Produto sem nome';
-    const descricaoGerada =
-      rendered?.descricao ?? dto.descricaoSugerida ?? '';
+    const nomeGerado =
+      rendered?.nome ??
+      dto.nomePeca ??
+      dto.descricaoSugerida?.slice(0, 80) ??
+      'Produto sem nome';
+    const descricaoGerada = rendered?.descricao ?? dto.descricaoSugerida ?? '';
 
     // Duplicata por nome (aviso, não bloqueia — escopo: "se existir, atualiza estoque e encerra")
     const dupByName = await this.findDuplicate({ nome: nomeGerado });
@@ -218,7 +240,14 @@ export class ProductsService {
 
     let nomeGerado = existing.nomeGerado;
     let descricaoGerada = existing.descricaoGerada;
-    if (dto.nomePeca || dto.banhoMaterial || dto.cor || dto.tamanho || dto.fecho || dto.templateId) {
+    if (
+      dto.nomePeca ||
+      dto.banhoMaterial ||
+      dto.cor ||
+      dto.tamanho ||
+      dto.fecho ||
+      dto.templateId
+    ) {
       const rendered = await this.renderFromTemplate(templateId ?? undefined, {
         nomePeca: dto.nomePeca ?? existing.nomePeca ?? '',
         banhoMaterial: dto.banhoMaterial ?? existing.banhoMaterial ?? '',
@@ -332,8 +361,8 @@ export class ProductsService {
 
     const product = await this.get(id);
 
-    const attributeFields = (['cor', 'tamanho', 'banho'] as const).filter((field) =>
-      product.variants.some((v) => v[field]),
+    const attributeFields = (['cor', 'tamanho', 'banho'] as const).filter(
+      (field) => product.variants.some((v) => v[field]),
     );
     const attributeLabels: Record<(typeof attributeFields)[number], string> = {
       cor: 'Cor',
@@ -344,7 +373,9 @@ export class ProductsService {
     const payload = {
       name: { pt: product.nomeGerado },
       description: { pt: product.descricaoGerada },
-      attributes: attributeFields.map((field) => ({ pt: attributeLabels[field] })),
+      attributes: attributeFields.map((field) => ({
+        pt: attributeLabels[field],
+      })),
       variants: product.variants.map((v) => ({
         sku: v.sku,
         price: v.preco.toString(),
@@ -352,13 +383,17 @@ export class ProductsService {
         stock: v.estoque,
         values: attributeFields.map((field) => ({ pt: v[field] || '-' })),
       })),
-      categories: product.categoryId && product.category?.nuvemshopCategoryId
-        ? [Number(product.category.nuvemshopCategoryId)]
-        : undefined,
+      categories:
+        product.categoryId && product.category?.nuvemshopCategoryId
+          ? [Number(product.category.nuvemshopCategoryId)]
+          : undefined,
     };
 
     const result = product.nuvemshopProductId
-      ? await this.nuvemshop.client.products.update(product.nuvemshopProductId, payload)
+      ? await this.nuvemshop.client.products.update(
+          product.nuvemshopProductId,
+          payload,
+        )
       : await this.nuvemshop.client.products.create(payload);
 
     const nuvemshopProductId = String((result as { id: number | string }).id);
@@ -376,7 +411,8 @@ export class ProductsService {
    */
   async labelData(id: string) {
     const product = await this.get(id);
-    const barcode = product.skuInterno ?? product.variants[0]?.sku ?? product.id.slice(-8);
+    const barcode =
+      product.skuInterno ?? product.variants[0]?.sku ?? product.id.slice(-8);
     return {
       id: product.id,
       nome: product.nomeGerado,

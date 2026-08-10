@@ -24,7 +24,11 @@ export class OrdersService {
   async get(id: string) {
     const order = await this.prisma.client.order.findUnique({
       where: { id },
-      include: { customer: true, items: { include: { product: true } }, invoice: true },
+      include: {
+        customer: true,
+        items: { include: { product: true } },
+        invoice: true,
+      },
     });
     if (!order) throw new NotFoundException('Pedido não encontrado');
     return order;
@@ -46,7 +50,9 @@ export class OrdersService {
   async emitInvoice(orderId: string) {
     const order = await this.get(orderId);
 
-    const existing = await this.prisma.client.invoice.findUnique({ where: { orderId } });
+    const existing = await this.prisma.client.invoice.findUnique({
+      where: { orderId },
+    });
     if (existing && existing.status === 'emitida') {
       return existing;
     }
@@ -79,7 +85,10 @@ export class OrdersService {
     if (await this.bling.isConnected()) {
       try {
         const client = await this.bling.getClient();
-        const result = (await client.invoices.create(payload)) as { id?: number | string; numero?: string | number };
+        const result = (await client.invoices.create(payload)) as {
+          id?: number | string;
+          numero?: string | number;
+        };
         blingInvoiceId = result?.id != null ? String(result.id) : undefined;
         number = result?.numero != null ? String(result.numero) : undefined;
         status = 'emitida';

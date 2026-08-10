@@ -7,7 +7,9 @@ export interface CurrentUserPayload {
   resellerId?: string | null;
 }
 
-export const CurrentUser = createParamDecorator((_: unknown, ctx: ExecutionContext): CurrentUserPayload => {
-  const request = ctx.switchToHttp().getRequest();
-  return request.user;
-});
+export const CurrentUser = createParamDecorator(
+  (_: unknown, ctx: ExecutionContext): CurrentUserPayload => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user;
+  },
+);

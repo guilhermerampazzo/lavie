@@ -32,13 +32,21 @@ export class SyncProcessor extends WorkerHost {
       const count = await this.sync.runEntity(entity);
       await this.prisma.client.syncJob.update({
         where: { id: syncJobId },
-        data: { status: 'success', finishedAt: new Date(), error: `${count} registro(s) sincronizado(s)` },
+        data: {
+          status: 'success',
+          finishedAt: new Date(),
+          error: `${count} registro(s) sincronizado(s)`,
+        },
       });
     } catch (err) {
       this.logger.error(`Sync ${entity} falhou: ${(err as Error).message}`);
       await this.prisma.client.syncJob.update({
         where: { id: syncJobId },
-        data: { status: 'failed', finishedAt: new Date(), error: (err as Error).message },
+        data: {
+          status: 'failed',
+          finishedAt: new Date(),
+          error: (err as Error).message,
+        },
       });
     }
   }

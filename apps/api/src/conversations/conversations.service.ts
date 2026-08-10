@@ -114,7 +114,10 @@ export class ConversationsService {
 
     const transcript = messages
       .slice(-10)
-      .map((m) => `${m.direction === 'inbound' ? 'Cliente' : 'Atendente'}: ${m.content}`)
+      .map(
+        (m) =>
+          `${m.direction === 'inbound' ? 'Cliente' : 'Atendente'}: ${m.content}`,
+      )
       .join('\n');
 
     const customerContext = customer
@@ -141,13 +144,18 @@ Regras: escolha apenas índices que existem no catálogo (0 a ${catalogBrief.len
 
     const { content } = await this.ai.client.chatWithFallback(
       [
-        { role: 'system', content: 'Você é um assistente de vendas de joalheria.' },
+        {
+          role: 'system',
+          content: 'Você é um assistente de vendas de joalheria.',
+        },
         { role: 'user', content: prompt },
       ],
       { jsonMode: true, temperature: 0.3 },
     );
 
-    const parsed = AiClient.extractJson<{ recomendacoes: Array<{ idx: number; motivo: string }> }>(content);
+    const parsed = AiClient.extractJson<{
+      recomendacoes: Array<{ idx: number; motivo: string }>;
+    }>(content);
     const recommendations = (parsed.recomendacoes ?? [])
       .filter((r) => catalog[r.idx])
       .slice(0, 3)
@@ -169,10 +177,13 @@ Regras: escolha apenas índices que existem no catálogo (0 a ${catalogBrief.len
 
     if (this.evolution.configured && conversation.channel === 'whatsapp') {
       try {
-        await this.evolution.client.messages.sendText(this.evolution.instanceName, {
-          number: conversation.contact,
-          text: dto.content,
-        });
+        await this.evolution.client.messages.sendText(
+          this.evolution.instanceName,
+          {
+            number: conversation.contact,
+            text: dto.content,
+          },
+        );
       } catch (err) {
         throw new BadRequestException(
           `Falha ao enviar mensagem via Evolution: ${(err as Error).message}`,

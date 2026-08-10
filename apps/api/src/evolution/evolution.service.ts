@@ -117,19 +117,29 @@ export class EvolutionService {
     }>;
 
     let created = 0;
+    let conversationsCreated = 0;
     for (const chat of chatList) {
       const contact = String(chat.remoteJid ?? chat.id ?? '')
         .replace(/@s\.whatsapp\.net$/, '')
         .replace(/@lid$/, '');
       if (!contact) continue;
 
+      // Coleta mensagens com conteúdo ANTES de criar a conversa — o findChats
+      // retorna chats com lastMessage, mas o array messages pode vir vazio;
+      // sem mensagem real não faz sentido criar conversa vazia no painel.
+      const messages = (chat.messages ?? []).filter((m) => {
+        const content = m.message?.conversation ?? m.message?.extendedTextMessage?.text ?? '';
+        return content.trim().length > 0;
+      });
+      if (messages.length === 0) continue;
+
       const conversation = await this.prisma.client.conversation.upsert({
         where: { contact_channel: { contact, channel: 'whatsapp' } },
         update: {},
         create: { contact, channel: 'whatsapp', status: 'aberta' },
       });
+      conversationsCreated++;
 
-      const messages = chat.messages ?? [];
       for (const m of messages) {
         const content =
           m.message?.conversation ?? m.message?.extendedTextMessage?.text ?? '';
@@ -150,9 +160,9 @@ export class EvolutionService {
       }
     }
     this.logger.log(
-      `Evolution pull: ${created} mensagens novas em ${chatList.length} chats`,
+      `Evolution pull: ${created} mensagens novas em ${conversationsCreated} conversas (de ${chatList.length} chats)`,
     );
-    return { chats: chatList.length, messagesCreated: created };
+    return { chats: chatList.length, conversationsCreated, messagesCreated: created };
   }
 
   /** Liga a instância (conexão WhatsApp). Se o QR for necessário, retorna a URL. */

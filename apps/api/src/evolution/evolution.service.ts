@@ -89,29 +89,42 @@ export class EvolutionService {
     if (!this.configured) return { error: 'Evolution não configurado.' };
     const chats = await this.client.chats.find(this.instanceName, { limit });
 
-    const chatList = (chats ?? []) as Array<{ id?: string; remoteJid?: string; name?: string; messages?: unknown[] }>;
+    const chatList = (chats ?? []) as Array<{
+      id?: string;
+      remoteJid?: string;
+      name?: string;
+      pushName?: string;
+      messages?: Array<{ message?: { conversation?: string; extendedTextMessage?: { text?: string } }; key?: { id?: string; fromMe?: boolean }; pushName?: string }>;
+    }>;
 
     let created = 0;
     for (const chat of chatList) {
-      const contact = String(chat.remoteJid ?? chat.id ?? '').replace(/@s\.whatsapp\.net$/, '');
+      const contact = String(chat.remoteJid ?? chat.id ?? '')
+        .replace(/@s\.whatsapp\.net$/, '')
+        .replace(/@lid$/, '');
       if (!contact) continue;
 
       const conversation = await this.prisma.client.conversation.upsert({
         where: { contact_channel: { contact, channel: 'whatsapp' } },
-        update: { status: 'aberta' },
+        update: {},
         create: { contact, channel: 'whatsapp', status: 'aberta' },
       });
 
-      const messages = (chat.messages ?? []) as Array<{ key?: { id?: string }; message?: { conversation?: string } }>;
+      const messages = chat.messages ?? [];
       for (const m of messages) {
-        const content = m.message?.conversation ?? '';
+        const content =
+          m.message?.conversation ?? m.message?.extendedTextMessage?.text ?? '';
         if (!content) continue;
         const exists = await this.prisma.client.message.findFirst({
           where: { conversationId: conversation.id, content },
         });
         if (!exists) {
           await this.prisma.client.message.create({
-            data: { conversationId: conversation.id, direction: 'inbound', content },
+            data: {
+              conversationId: conversation.id,
+              direction: m.key?.fromMe ? 'outbound' : 'inbound',
+              content,
+            },
           });
           created++;
         }

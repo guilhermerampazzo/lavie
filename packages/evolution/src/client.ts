@@ -40,9 +40,11 @@ export class EvolutionClient {
   };
 
   chats = {
-    find: (instanceName: string, params: Record<string, string | number> = {}) => {
-      const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
-      return this.request(`/chat/findChats/${instanceName}?${qs.toString()}`);
-    },
+    /** POST — validado na v2.3.7 em produção (2026-08): findChats é POST com body. */
+    find: (instanceName: string, params: Record<string, unknown> = {}) =>
+      this.request(`/chat/findChats/${instanceName}`, {
+        method: 'POST',
+        body: JSON.stringify({ where: {}, limit: 25, ...params }),
+      }),
   };
 }

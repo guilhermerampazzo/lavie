@@ -164,12 +164,7 @@ export class ProductsService {
     }
 
     const skuInterno = dto.skuInterno ?? generateSku(dto.tipoPeca);
-
-    // Se veio do OCR e há fornecedor, cria/atualiza fornecedor
-    let supplierId = dto.supplierId;
-    if (dto.dataEntrada && dto.supplierId) {
-      // supplierId explícito já basta
-    }
+    const supplierId = dto.supplierId;
 
     return this.prisma.client.product.create({
       data: {
@@ -231,7 +226,7 @@ export class ProductsService {
         tamanho: dto.tamanho ?? existing.tamanho ?? undefined,
         fecho: dto.fecho ?? existing.fecho ?? undefined,
         hipoalergenico: dto.hipoalergenico ?? existing.hipoalergenico,
-      } as UpdateProductDto);
+      });
       if (rendered) {
         nomeGerado = rendered.nome;
         descricaoGerada = rendered.descricao;

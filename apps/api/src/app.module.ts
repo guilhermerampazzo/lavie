@@ -32,6 +32,7 @@ import { ReturnsModule } from './returns/returns.module';
 import { KitsModule } from './kits/kits.module';
 import { ChannelsModule } from './channels/channels.module';
 import { ReportsAutomationModule } from './reports-automation/reports-automation.module';
+import { CredentialsModule } from './credentials/credentials.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { ReportsAutomationModule } from './reports-automation/reports-automation
     KitsModule,
     ChannelsModule,
     ReportsAutomationModule,
+    CredentialsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

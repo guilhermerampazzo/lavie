@@ -3,8 +3,10 @@ import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { apiServerFetch } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
-import { FileText, Zap } from "lucide-react";
+import { FileText, Zap, KeyRound } from "lucide-react";
 import { SyncPanel, type SyncJobItem } from "@/components/configuracoes/sync-panel";
+import { CredentialsPanel } from "@/components/configuracoes/credentials-panel";
+import type { ChannelCredentialsStatusMap } from "@/types/credentials";
 
 interface IntegrationStatus {
   configured: boolean;
@@ -24,9 +26,10 @@ export default async function ConfiguracoesPage({
 }) {
   const session = await auth();
   const { bling: blingFeedback } = await searchParams;
-  const [integrations, syncJobs] = await Promise.all([
+  const [integrations, syncJobs, credentials] = await Promise.all([
     apiServerFetch<IntegrationsResponse>("/settings/integrations").catch(() => null),
     apiServerFetch<SyncJobItem[]>("/settings/sync-jobs").catch(() => [] as SyncJobItem[]),
+    apiServerFetch<ChannelCredentialsStatusMap>("/settings/credentials").catch(() => ({})),
   ]);
 
   return (
@@ -118,6 +121,24 @@ export default async function ConfiguracoesPage({
                 Fluxos automáticos (WhatsApp)
               </Link>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-line bg-surface p-5 lg:col-span-2">
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Frete e marketplaces
+            </p>
+            <p className="mb-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <KeyRound className="size-3" />
+              Credenciais salvas com segurança no banco — Correios, Melhor Envio, TikTok Shop, Instagram, Mercado
+              Livre, Shopee, Amazon e Shein. Apenas admin.
+            </p>
+            {Object.keys(credentials).length === 0 ? (
+              <p className="rounded-lg border border-dashed border-line p-6 text-center text-[12px] text-muted-foreground">
+                Painel de credenciais indisponível.
+              </p>
+            ) : (
+              <CredentialsPanel status={credentials} />
+            )}
           </div>
 
           <div className="lg:col-span-2">

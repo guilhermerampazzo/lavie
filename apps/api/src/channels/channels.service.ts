@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NuvemshopService } from '../nuvemshop/nuvemshop.service';
 import { ProductsService } from '../products/products.service';
+import { CredentialsService } from '../credentials/credentials.service';
 
 export type ChannelKey =
   | 'site'
@@ -15,22 +16,32 @@ export type ChannelKey =
   | 'revendedora'
   | 'fisico';
 
+/** Canais com credenciais configuráveis na UI (/configuracoes). */
+export const CREDENTIAL_CHANNELS: ChannelKey[] = [
+  'instagram',
+  'tiktok',
+  'mercado_livre',
+  'shopee',
+  'amazon',
+  'shein',
+];
+
 export interface ChannelAdapter {
   key: ChannelKey;
   label: string;
-  /** true quando as credenciais do canal estão configuradas no .env */
+  /** true quando as credenciais do canal estão configuradas (env ou banco). */
   configured: boolean;
-  /** Publica (ou atualiza) o produto no canal. Deve retornar o id externo. */
+  /** Publica (ou atualiza) o produto no canal. */
   publish(productId: string): Promise<{ externalId?: string; status: 'published' | 'pending'; message?: string }>;
 }
 
 /**
  * M8 — Publicação multi-canal (escopofinal.md seção 8).
  *
- * A Nuvemshop é o canal com adapter funcional hoje. Os marketplaces
- * (Mercado Livre, Shopee, Amazon, Shein, TikTok Shop, Instagram) ficam
- * registrados com status "pending" e mensagem clara — a estrutura de
- * adapters está pronta para receber cada integração sem tocar no resto.
+ * A Nuvemshop é o canal com adapter funcional hoje (publicação real).
+ * Marketplaces com credenciais salvas em /configuracoes ficam "configured"
+ * e retornam pending com instrução de ativação — a estrutura de adapters
+ * está pronta para receber cada integração sem tocar no resto.
  */
 @Injectable()
 export class ChannelsService {
@@ -41,6 +52,7 @@ export class ChannelsService {
     private readonly prisma: PrismaService,
     private readonly nuvemshop: NuvemshopService,
     private readonly products: ProductsService,
+    private readonly credentials: CredentialsService,
   ) {
     this.adapters = [
       {
@@ -64,7 +76,7 @@ export class ChannelsService {
   private pending(label: string) {
     return Promise.resolve({
       status: 'pending' as const,
-      message: `${label}: integração registrada — credenciais pendentes de configuração.`,
+      message: `${label}: credenciais salvas, mas a integração ainda não foi ativada.`,
     });
   }
 
@@ -81,20 +93,29 @@ export class ChannelsService {
   }
 
   private publishReseller() {
-    // Canal interno (portal revendedora/PDV): produto ativo já aparece no catálogo.
     return Promise.resolve({
       status: 'published' as const,
       message: 'Canal interno: produto disponível no catálogo (status ativo).',
     });
   }
 
-  listChannels() {
-    return this.adapters.map((a) => ({ key: a.key, label: a.label, configured: a.configured }));
+  /** Lista canais com status real (credenciais de env + banco). */
+  async listChannels() {
+    const credStatus = await this.credentials.getStatus();
+    return this.adapters.map((a) => {
+      const dbCreds = CREDENTIAL_CHANNELS.includes(a.key) ? credStatus[a.key] : undefined;
+      return {
+        key: a.key,
+        label: a.label,
+        configured: a.configured || Boolean((dbCreds as { hasCredentials?: boolean } | undefined)?.hasCredentials),
+        credentialFields: (dbCreds as { fields?: unknown } | undefined)?.fields ?? null,
+      };
+    });
   }
 
   /**
-   * Publica o produto em TODOS os canais selecionados (ProductChannel).
-   * Registra um SyncJob por canal para auditoria. Idempotente.
+   * Publica o produto nos canais selecionados (ProductChannel) — a equipe
+   * escolhe exatamente onde publicar no cadastro. Registra SyncJob por canal.
    */
   async publishProduct(productId: string) {
     const product = await this.prisma.client.product.findUnique({

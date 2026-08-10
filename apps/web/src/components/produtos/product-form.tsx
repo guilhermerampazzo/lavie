@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -105,11 +106,13 @@ export function ProductForm({
   categories,
   suppliers,
   initial,
+  channelStatus,
 }: {
   templates: ProductTemplate[];
   categories: Category[];
   suppliers: Supplier[];
   initial?: Product | null;
+  channelStatus?: Record<string, { hasCredentials: boolean }>;
 }) {
   const router = useRouter();
   const apiFetch = useApiClient();
@@ -799,6 +802,8 @@ export function ProductForm({
             <div className="flex flex-wrap gap-1.5">
               {CHANNEL_OPTIONS.map((c) => {
                 const checked = values.canais.includes(c.value);
+                const cred = channelStatus?.[c.value];
+                const noCreds = !cred?.hasCredentials && !["site", "nuvemshop", "revendedora", "fisico"].includes(c.value);
                 return (
                   <button
                     key={c.value}
@@ -814,12 +819,25 @@ export function ProductForm({
                         ? "border-brand bg-brand text-white"
                         : "border-line bg-surface text-muted-foreground hover:border-brand/50"
                     }`}
+                    title={
+                      noCreds
+                        ? "Sem credenciais configuradas em /configuracoes — a publicação ficará pendente."
+                        : c.label
+                    }
                   >
                     {c.label}
+                    {noCreds && !checked && (
+                      <span className="ml-1 text-[9px] font-normal opacity-70">(sem cred.)</span>
+                    )}
                   </button>
                 );
               })}
             </div>
+            <p className="mt-1.5 text-[10.5px] text-muted-foreground">
+              Escolha individualmente onde publicar (site, Nuvemshop, marketplaces, revendedoras, PDV). Canais sem
+              credenciais ficam marcados — a publicação entra como pendente até configurar em{" "}
+              <Link href="/configuracoes" className="underline hover:text-brand-dark">Configurações</Link>.
+            </p>
           </div>
         </form>
 

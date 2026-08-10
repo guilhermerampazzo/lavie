@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { apiServerFetch } from "@/lib/api-client";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { OrderStatusBadge } from "@/components/pedidos/order-status-badge";
+import { ReturnRequestButton } from "@/components/portal/return-request-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShoppingBag } from "lucide-react";
 import type { PortalOrder } from "@/types/portal";
@@ -9,6 +10,13 @@ import type { PortalOrder } from "@/types/portal";
 function formatBRL(value: string | number) {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
+
+const PAYMENT_LABEL: Record<string, string> = {
+  boleto: "Boleto",
+  pix: "Pix",
+  transferencia: "Transferência",
+  credito_em_conta: "Crédito em conta",
+};
 
 export default async function PortalPedidosPage() {
   const session = await auth();
@@ -25,9 +33,23 @@ export default async function PortalPedidosPage() {
         <div className="flex flex-col gap-2.5">
           {orders.map((ro) => (
             <div key={ro.id} className="rounded-xl border border-line bg-surface p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-[13px] font-medium">Pedido #{ro.order?.id.slice(-6)}</span>
-                {ro.order && <OrderStatusBadge status={ro.order.status} />}
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-medium">Pedido #{ro.order?.id.slice(-6)}</span>
+                  {ro.order && <OrderStatusBadge status={ro.order.status} />}
+                </div>
+                {ro.paymentMethod && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${
+                      ro.paymentStatus === "pago"
+                        ? "bg-success/10 text-success"
+                        : "bg-warning/10 text-warning"
+                    }`}
+                  >
+                    {PAYMENT_LABEL[ro.paymentMethod] ?? ro.paymentMethod} ·{" "}
+                    {ro.paymentStatus === "pago" ? "pago" : "aguardando"}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col gap-1">
                 {ro.order?.items.map((item) => (
@@ -37,9 +59,11 @@ export default async function PortalPedidosPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-2 flex justify-between border-t border-line pt-2 text-[12.5px] font-medium">
-                <span>Total</span>
-                <span className="tabular-nums">{formatBRL(ro.order?.total ?? 0)}</span>
+              <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
+                <span className="text-[12.5px] font-medium">
+                  Total <span className="tabular-nums">{formatBRL(ro.order?.total ?? 0)}</span>
+                </span>
+                {ro.order && <ReturnRequestButton orderId={ro.order.id} />}
               </div>
             </div>
           ))}

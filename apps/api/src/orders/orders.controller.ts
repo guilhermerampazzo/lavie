@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -24,5 +24,10 @@ export class OrdersController {
   @Put(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: unknown) {
     return this.service.updateStatus(id, updateOrderStatusSchema.parse(body));
+  }
+
+  @Post(':id/emit-invoice')
+  emitInvoice(@Param('id') id: string) {
+    return this.service.emitInvoice(id);
   }
 }

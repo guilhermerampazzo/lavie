@@ -4,7 +4,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser, type CurrentUserPayload } from '../common/decorators/current-user.decorator';
 import { PortalService } from './portal.service';
-import { createPortalOrderSchema } from './dto/portal-order.dto';
+import { createPortalOrderSchema, createReturnRequestSchema } from './dto/portal-order.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('revendedora')
@@ -25,6 +25,16 @@ export class PortalController {
   @Post('orders')
   createOrder(@CurrentUser() user: CurrentUserPayload, @Body() body: unknown) {
     return this.service.createOrder(user.resellerId, createPortalOrderSchema.parse(body));
+  }
+
+  @Post('returns')
+  createReturn(@CurrentUser() user: CurrentUserPayload, @Body() body: unknown) {
+    return this.service.createReturn(user.resellerId, createReturnRequestSchema.parse(body));
+  }
+
+  @Get('materials')
+  supportMaterials() {
+    return this.service.supportMaterials();
   }
 
   @Get('price-table')

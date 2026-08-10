@@ -132,9 +132,10 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  variants   Variant[]
-  images     ProductImage[]
-  orderItems OrderItem[]
+  variants            Variant[]
+  images              ProductImage[]
+  orderItems          OrderItem[]
+  resellerKitItems    ResellerKitItem[]
 
   @@index([status])
   @@index([supplierId])
@@ -259,18 +260,18 @@ model Customer {
   phone               String?
   document            String?
   city                String?
-  state                String?
+  state               String?
   birthDate           DateTime?
-  segments             CustomerSegment[]
-  loyaltyPoints         LoyaltyPoints?
-  orders                Order[]
-  notes                 String?          @db.Text
+  segments            CustomerSegment[]
+  loyaltyPoints       LoyaltyPoints?
+  orders              Order[]
+  notes               String?           @db.Text
   // Módulo 4 - marcação para inclusão no grupo VIP do WhatsApp
-  whatsappVip          Boolean           @default(false)
-  createdAt              DateTime         @default(now())
-  updatedAt               DateTime        @updatedAt
+  whatsappVip         Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
-  automationLogs       AutomationLog[]
+  automationLogs AutomationLog[]
 
   @@index([segments])
   @@index([whatsappVip])
@@ -313,13 +314,13 @@ model Affiliate {
 
 // Material de divulgação (Módulo 4 - biblioteca de imagens/textos para afiliadas).
 model AffiliateMaterial {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   affiliateId String?
   affiliate   Affiliate? @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
   title       String
-  kind        String   // text | image | pdf
-  content     String   @db.Text // texto pronto ou URL do arquivo (MinIO)
-  createdAt   DateTime @default(now())
+  kind        String // text | image | pdf
+  content     String     @db.Text // texto pronto ou URL do arquivo (MinIO)
+  createdAt   DateTime   @default(now())
 
   @@index([affiliateId])
 }
@@ -383,11 +384,12 @@ model Reseller {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  users        User[]
-  priceTable   ResellerPriceTable[]
-  consignments Consignment[]
-  orders       ResellerOrder[]
-  documents    ResellerDocument[]
+  users          User[]
+  priceTable     ResellerPriceTable[]
+  consignments   Consignment[]
+  orders         ResellerOrder[]
+  documents      ResellerDocument[]
+  returnRequests ReturnRequest[]
 }
 
 model ResellerPriceTable {
@@ -419,12 +421,15 @@ model Consignment {
 }
 
 model ResellerOrder {
-  id         String   @id @default(cuid())
-  resellerId String
-  reseller   Reseller @relation(fields: [resellerId], references: [id], onDelete: Cascade)
-  orderId    String?  @unique
-  order      Order?   @relation(fields: [orderId], references: [id])
-  createdAt  DateTime @default(now())
+  id            String        @id @default(cuid())
+  resellerId    String
+  reseller      Reseller      @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  orderId       String?       @unique
+  order         Order?        @relation(fields: [orderId], references: [id])
+  // Módulo 6 — forma de pagamento escolhida no portal
+  paymentMethod PaymentMethod?
+  paymentStatus PaymentStatus @default(pendente)
+  createdAt     DateTime      @default(now())
 }
 
 model ResellerDocument {
@@ -470,9 +475,11 @@ model Order {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  items         OrderItem[]
-  commissions   Commission[]
-  resellerOrder ResellerOrder?
+  items          OrderItem[]
+  commissions    Commission[]
+  resellerOrder  ResellerOrder?
+  invoice        Invoice?
+  returnRequests ReturnRequest[]
 }
 
 model OrderItem {
@@ -488,6 +495,144 @@ model OrderItem {
 }
 
 // ---------------------------------------------------------------------------
+// Módulo 5 — ERP: estoque, NF-e e financeiro (Bling)
+// ---------------------------------------------------------------------------
+
+enum StockMovementType {
+  entrada // compra de fornecedor
+  saida // venda
+  consignacao_saida
+  consignacao_retorno
+  devolucao
+  ajuste
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  variantId String
+  productId String?
+  type      StockMovementType
+  quantity  Int // positivo para entrada, negativo para saída
+  reason    String?           @db.Text
+  userId    String?
+  createdAt DateTime          @default(now())
+
+  @@index([variantId])
+  @@index([type, createdAt])
+}
+
+enum InvoiceStatus {
+  rascunho
+  emitida
+  cancelada
+}
+
+// NF-e emitida no Bling (fiscal) — vincula ao pedido.
+model Invoice {
+  id             String        @id @default(cuid())
+  orderId        String        @unique
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  blingInvoiceId String?       @unique
+  number         String?
+  status         InvoiceStatus @default(rascunho)
+  issueDate      DateTime?
+  total          Decimal       @db.Decimal(10, 2)
+  error          String?       @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+enum AccountStatus {
+  aberta
+  paga
+  atrasada
+}
+
+enum AccountType {
+  receivable // contas a receber (vendas, parcelas)
+  payable // contas a pagar (fornecedores, comissões, despesas)
+}
+
+model Account {
+  id          String        @id @default(cuid())
+  type        AccountType
+  description String
+  amount      Decimal       @db.Decimal(10, 2)
+  dueDate     DateTime
+  status      AccountStatus @default(aberta)
+  paidAt      DateTime?
+  orderId     String?
+  supplierId  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([type, status])
+  @@index([dueDate])
+}
+
+// ---------------------------------------------------------------------------
+// Módulo 6 — Portal de Revendedoras: pagamento, kits, trocas/devoluções
+// ---------------------------------------------------------------------------
+
+enum PaymentMethod {
+  boleto
+  pix
+  transferencia
+  credito_em_conta
+}
+
+enum PaymentStatus {
+  pendente
+  pago
+  cancelado
+}
+
+enum ReturnStatus {
+  solicitada
+  aprovada
+  recusada
+  concluida
+}
+
+model ReturnRequest {
+  id         String       @id @default(cuid())
+  resellerId String
+  reseller   Reseller     @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+  orderId    String
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reason     String       @db.Text
+  status     ReturnStatus @default(solicitada)
+  items      Json // [{ sku, name, quantity }] devolvidos/trocados
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([resellerId, status])
+}
+
+// Kits exclusivos para revendedoras (escopofinal.md 7.3)
+model ResellerKit {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  discountPct Decimal  @default(0) @db.Decimal(5, 2) // desconto adicional sobre a soma dos itens
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  items ResellerKitItem[]
+}
+
+model ResellerKitItem {
+  id        String   @id @default(cuid())
+  kitId     String
+  kit       ResellerKit @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+
+  @@unique([kitId, productId])
+}
+
+// ---------------------------------------------------------------------------
 // Automacao / Atendimento (fase 4 - Evolution API)
 // ---------------------------------------------------------------------------
 
@@ -500,7 +645,7 @@ enum ConversationStatus {
 model MessageTemplate {
   id        String   @id @default(cuid())
   name      String
-  trigger   String   // boas-vindas, pos-compra, reativacao, aniversario, carrinho_abandonado...
+  trigger   String // boas-vindas, pos-compra, reativacao, aniversario, carrinho_abandonado...
   content   String   @db.Text
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -512,14 +657,14 @@ model MessageTemplate {
 // cliente/alvo (ex.: aniversário 1x por ano, pós-compra 1x por pedido).
 //
 model AutomationLog {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   trigger    String
-  targetId   String   // customerId (ou orderId p/ pos-compra)
+  targetId   String // customerId (ou orderId p/ pos-compra)
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  status     String   // sent | skipped_no_template | failed | no_evolution
+  status     String // sent | skipped_no_template | failed | no_evolution
   detail     String?
-  sentAt     DateTime @default(now())
+  sentAt     DateTime  @default(now())
 
   @@unique([trigger, targetId])
   @@index([trigger, customerId])

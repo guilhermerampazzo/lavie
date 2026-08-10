@@ -18,6 +18,9 @@ export function PortalShell({
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-[12px] text-muted-foreground sm:inline">{resellerName}</span>
+          <Link href="/portal/materiais" className="text-[12.5px] font-medium text-brand-dark">
+            Materiais
+          </Link>
           <Link href="/portal/pedidos" className="text-[12.5px] font-medium text-brand-dark">
             Meus pedidos
           </Link>

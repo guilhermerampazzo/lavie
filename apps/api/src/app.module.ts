@@ -26,6 +26,10 @@ import { BlingModule } from './bling/bling.module';
 import { SettingsModule } from './settings/settings.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { AutomationsModule } from './automations/automations.module';
+import { FinanceModule } from './finance/finance.module';
+import { StockModule } from './stock/stock.module';
+import { ReturnsModule } from './returns/returns.module';
+import { KitsModule } from './kits/kits.module';
 
 @Module({
   imports: [
@@ -62,6 +66,10 @@ import { AutomationsModule } from './automations/automations.module';
     SettingsModule,
     SuppliersModule,
     AutomationsModule,
+    FinanceModule,
+    StockModule,
+    ReturnsModule,
+    KitsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

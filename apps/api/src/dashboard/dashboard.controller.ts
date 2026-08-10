@@ -15,6 +15,16 @@ export class DashboardController {
     return this.service.metrics(period ?? 'month');
   }
 
+  @Get('stock')
+  stock() {
+    return this.service.stock();
+  }
+
+  @Get('affiliate-ranking')
+  affiliateRanking() {
+    return this.service.affiliateRanking();
+  }
+
   @Get('alerts')
   alerts() {
     return this.service.alerts();
